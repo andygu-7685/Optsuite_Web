@@ -15,7 +15,7 @@ export default function ImageTable({ images, selectedId, onSelect }) {
   if (images.length === 0) {
     return (
       <div className="empty-state">
-        No images selected. Use Pick image or Pick folder to load files.
+        No stored images yet. Use Pick image or Pick folder to upload files.
       </div>
     );
   }

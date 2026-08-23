@@ -174,8 +174,17 @@ input {
   text-transform: capitalize;
 }
 
-.status-processed {
+.status-processed,
+.status-stored {
   color: var(--ok);
+}
+
+.status-uploading {
+  color: var(--accent);
+}
+
+.status-error {
+  color: #f08080;
 }
 
 .empty-state {
