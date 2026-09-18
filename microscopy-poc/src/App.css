@@ -1,126 +1,45 @@
 /* Tokens (--text-h, --border, --accent, --code-bg, ...) come from index.css. */
 
-#center {
+main {
   display: flex;
   flex-direction: column;
   align-items: center;
   gap: 16px;
-  padding: 48px 24px 64px;
+  padding: 32px 24px;
 }
 
-.hero {
-  position: relative;
-  display: grid;
-  place-items: center;
+input[type='file'] {
+  font: inherit;
+  font-size: 15px;
+  color: var(--text);
 }
 
-.hero .base {
-  display: block;
-}
-
-/* The two framework logos sit on top of the hero artwork. */
-.hero .framework,
-.hero .vite {
-  position: absolute;
-  width: 44px;
-  height: 44px;
-}
-
-.hero .framework {
-  top: 8px;
-  right: 8px;
-}
-
-.hero .vite {
-  bottom: 8px;
-  left: 8px;
-}
-
-.counter {
-  padding: 10px 20px;
+input[type='file']::file-selector-button {
+  margin-right: 12px;
+  padding: 8px 16px;
   border: 1px solid var(--accent-border);
   border-radius: 8px;
   background: var(--accent-bg);
   color: var(--accent);
+  font: inherit;
   font-size: 15px;
   cursor: pointer;
-  transition: background 0.15s;
 }
 
-.counter:hover,
-.counter:focus-visible {
-  background: var(--accent-border);
+canvas {
+  border: 1px solid var(--border);
+  border-radius: 8px;
+}
+
+pre {
+  width: 100%;
+  margin: 0;
+  padding: 16px;
+  box-sizing: border-box;
+  border-radius: 8px;
+  background: var(--code-bg);
   color: var(--text-h);
-}
-
-/* Horizontal rule between sections. */
-.ticks {
-  border-top: 1px solid var(--border);
-}
-
-#next-steps {
-  display: grid;
-  grid-template-columns: 1fr 1fr;
+  font: 14px/140% var(--mono);
   text-align: left;
-}
-
-#next-steps > div {
-  padding: 32px 24px;
-}
-
-#docs {
-  border-right: 1px solid var(--border);
-}
-
-#social {
-  background: var(--social-bg);
-}
-
-#next-steps .icon {
-  width: 28px;
-  height: 28px;
-  margin-bottom: 12px;
-  color: var(--accent);
-}
-
-#next-steps ul {
-  list-style: none;
-  margin: 16px 0 0;
-  padding: 0;
-  display: flex;
-  flex-direction: column;
-  gap: 8px;
-}
-
-#next-steps a {
-  display: inline-flex;
-  align-items: center;
-  gap: 8px;
-  color: var(--text-h);
-  text-decoration: none;
-  font-size: 15px;
-}
-
-#next-steps a:hover {
-  color: var(--accent);
-}
-
-.logo,
-.button-icon {
-  width: 18px;
-  height: 18px;
-}
-
-#spacer {
-  flex: 1;
-}
-
-@media (max-width: 1024px) {
-  #next-steps {
-    grid-template-columns: 1fr;
-  }
-  #docs {
-    border-right: 0;
-    border-bottom: 1px solid var(--border);
-  }
+  overflow-x: auto;
 }

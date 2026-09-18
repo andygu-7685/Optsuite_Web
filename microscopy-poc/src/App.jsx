@@ -1,5 +1,6 @@
 import {useEffect, useRef, useState } from 'react'
 import YOLO, { annotate } from '@ultralytics/yolo'
+import './App.css'
 
 export default function App() {
   const modelRef = useRef(null)
