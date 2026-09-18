@@ -20,15 +20,15 @@ def export(model_path: Path, imgsz: int, out_dir: Path, opset: int, simplify: bo
 
     model = YOLO(str(model_path))
 
-    # dynamic=False + nms=False keeps the graph a plain conv stack with a raw
-    # head, which is what onnxruntime-web's wasm backend handles best.
+    # nms=None (the default) exports the raw head; @ultralytics/yolo runs NMS in
+    # its Rust/wasm layer. nms=False 
     exported = model.export(
         format="onnx",
         imgsz=imgsz,
         opset=opset,
         simplify=simplify,
         dynamic=False,
-        nms=False,
+        nms=None,
     )
 
     onnx_path = out_dir / f"{model_path.stem}.onnx"
