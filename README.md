@@ -5,8 +5,18 @@ images. Scoring returns a `(group, element)` pair.
 
 ## Python scorer
 
+macOS / Linux:
+
 ```bash
 python3 -m venv .venv && source .venv/bin/activate
+pip install -r requirements.txt
+```
+
+Windows (PowerShell):
+
+```powershell
+py -m venv .venv
+.venv\Scripts\Activate.ps1
 pip install -r requirements.txt
 ```
 
