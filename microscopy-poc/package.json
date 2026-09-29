@@ -6,9 +6,10 @@
   "scripts": {
     "postinstall": "node scripts/copy-ort.mjs",
     "copy-ort": "node scripts/copy-ort.mjs",
-    "predev": "node scripts/check-static.mjs",
+    "list-models": "node scripts/list-models.mjs",
+    "predev": "node scripts/check-static.mjs && node scripts/list-models.mjs",
     "dev": "vite",
-    "prebuild": "node scripts/check-static.mjs",
+    "prebuild": "node scripts/check-static.mjs && node scripts/list-models.mjs",
     "build": "vite build",
     "lint": "oxlint",
     "preview": "vite preview"

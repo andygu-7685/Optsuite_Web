@@ -8,6 +8,41 @@ main {
   padding: 32px 24px;
 }
 
+.controls {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: center;
+  gap: 12px;
+  font-size: 15px;
+  color: var(--text);
+}
+
+.controls select {
+  margin-left: 8px;
+  padding: 8px 12px;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  background: transparent;
+  color: var(--text-h);
+  font: inherit;
+}
+
+.controls .button {
+  padding: 8px 16px;
+  border: 1px solid var(--accent-border);
+  border-radius: 8px;
+  background: var(--accent-bg);
+  color: var(--accent);
+  cursor: pointer;
+}
+
+.controls .button[aria-disabled='true'],
+.controls select:disabled {
+  opacity: 0.5;
+  cursor: default;
+}
+
 input[type='file'] {
   font: inherit;
   font-size: 15px;

@@ -1,16 +1,40 @@
-# React + Vite
+# microscopy-poc
 
-This template provides a minimal setup to get React working in Vite with HMR and some Oxlint rules.
+Runs the YOLO keypoint model in the browser with `@ultralytics/yolo`. Setup and
+model export are covered in the [root README](../README.md).
 
-Currently, two official plugins are available:
+## Scripts
 
-- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react) uses [Oxc](https://oxc.rs)
-- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react-swc) uses [SWC](https://swc.rs/)
+| Script | What it does |
+| --- | --- |
+| `npm run dev` | Starts the Vite dev server. Runs `predev` first. |
+| `npm run build` | Builds the production bundle into `dist/`. Runs `prebuild` first. |
+| `npm run preview` | Serves the built `dist/` locally to check a production build. |
+| `npm run lint` | Lints the source with oxlint (rules in `.oxlintrc.json`). |
+| `npm run copy-ort` | Copies the onnxruntime-web runtime into `public/ort/`. |
+| `npm run list-models` | Writes `public/models/index.json`, the list behind the Model dropdown. |
 
-## React Compiler
+These run automatically:
 
-The React Compiler is not enabled on this template because of its impact on dev & build performances. To add it, see [this documentation](https://react.dev/learn/react-compiler/installation).
+| Hook | Runs | Why |
+| --- | --- | --- |
+| `postinstall` | `copy-ort` | Keeps `public/ort/` matched to the installed onnxruntime-web version. |
+| `predev`, `prebuild` | `check-static`, then `list-models` | Stops early if `public/ort/` or a `.onnx` model is missing, then refreshes the model list. |
 
-## Expanding the Oxlint configuration
+## Details
 
-If you are developing a production application, we recommend using TypeScript with type-aware lint rules enabled. Check out the [TS template](https://github.com/vitejs/vite/tree/main/packages/create-vite/template-react-ts) for information on how to integrate TypeScript and Oxlint's TypeScript related rules in your project.
+- **`copy-ort`** ([scripts/copy-ort.mjs](scripts/copy-ort.mjs)): replaces
+  `public/ort/` with `node_modules/onnxruntime-web/dist`, skipping `.map` files.
+  The app loads the runtime from `/ort/` so it doesn't fetch it from a CDN.
+  `public/ort/` is gitignored. If it's missing, run `npm install` or
+  `npm run copy-ort`.
+- **`check-static`** ([scripts/check-static.mjs](scripts/check-static.mjs)):
+  exits with an error if `public/ort/` or any `public/models/*.onnx` file is
+  missing. Without this check, Vite would return `index.html` for the missing
+  model and the load would fail with an unclear parse error. It has no npm
+  script of its own; it only runs through `predev` and `prebuild`.
+- **`list-models`** ([scripts/list-models.mjs](scripts/list-models.mjs)): lists
+  every `.onnx` file in `public/models/`, adding metadata from its `.json`
+  sidecar (written by `export_model.py`) when one exists. The output file is
+  gitignored. After exporting a new model, restart `npm run dev` so it shows up
+  in the dropdown.
