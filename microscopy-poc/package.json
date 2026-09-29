@@ -4,7 +4,11 @@
   "version": "0.0.0",
   "type": "module",
   "scripts": {
+    "postinstall": "node scripts/copy-ort.mjs",
+    "copy-ort": "node scripts/copy-ort.mjs",
+    "predev": "node scripts/check-static.mjs",
     "dev": "vite",
+    "prebuild": "node scripts/check-static.mjs",
     "build": "vite build",
     "lint": "oxlint",
     "preview": "vite preview"

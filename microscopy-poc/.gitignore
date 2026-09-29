@@ -12,6 +12,9 @@ dist
 dist-ssr
 *.local
 
+# onnxruntime-web runtime, copied from node_modules on npm install
+public/ort/
+
 # Editor directories and files
 .vscode/*
 !.vscode/extensions.json
