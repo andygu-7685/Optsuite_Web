@@ -1,0 +1,12 @@
+{
+  "file": "4p_detect_ultra_pro_max.onnx",
+  "task": "pose",
+  "imgsz": 640,
+  "names": {
+    "0": "usaf_full_pattern"
+  },
+  "numClasses": 1,
+  "numKeypoints": 4,
+  "keypointDims": 3,
+  "source": "4p_detect_ultra_pro_max.pt"
+}

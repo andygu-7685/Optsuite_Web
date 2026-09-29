@@ -1,0 +1,45 @@
+/* Tokens (--text-h, --border, --accent, --code-bg, ...) come from index.css. */
+
+main {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 16px;
+  padding: 32px 24px;
+}
+
+input[type='file'] {
+  font: inherit;
+  font-size: 15px;
+  color: var(--text);
+}
+
+input[type='file']::file-selector-button {
+  margin-right: 12px;
+  padding: 8px 16px;
+  border: 1px solid var(--accent-border);
+  border-radius: 8px;
+  background: var(--accent-bg);
+  color: var(--accent);
+  font: inherit;
+  font-size: 15px;
+  cursor: pointer;
+}
+
+canvas {
+  border: 1px solid var(--border);
+  border-radius: 8px;
+}
+
+pre {
+  width: 100%;
+  margin: 0;
+  padding: 16px;
+  box-sizing: border-box;
+  border-radius: 8px;
+  background: var(--code-bg);
+  color: var(--text-h);
+  font: 14px/140% var(--mono);
+  text-align: left;
+  overflow-x: auto;
+}
