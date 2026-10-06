@@ -3,6 +3,20 @@
 Focus scoring of USAF 1951 resolution targets, plus a web UI for uploading source
 images. Scoring returns a `(group, element)` pair.
 
+## Quick start
+
+With GNU Make, Python 3, and Node installed, run from the repo root:
+
+```bash
+make
+```
+
+This creates `.venv`, installs the Python and microscopy-poc dependencies,
+exports the model to ONNX if the checkpoint is newer, and launches the
+microscopy-poc dev server. `make help` lists the other targets. After
+retraining, `make export` (optionally `MODEL=usaf_registration/models/<name>.pt`)
+forces a re-export.
+
 ## Python scorer
 
 macOS / Linux:
