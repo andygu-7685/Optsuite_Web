@@ -1,4 +1,4 @@
-# microscopy-poc
+# frontend
 
 Runs the YOLO keypoint model in the browser with `@ultralytics/yolo`. Setup and
 model export are covered in the [root README](../README.md).

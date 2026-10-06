@@ -1,20 +1,30 @@
 {
-  "name": "usaf_registration_web",
+  "name": "optsuite-web-frontend",
   "private": true,
-  "version": "0.1.0",
+  "version": "0.0.0",
   "type": "module",
   "scripts": {
+    "postinstall": "node scripts/copy-ort.mjs",
+    "copy-ort": "node scripts/copy-ort.mjs",
+    "list-models": "node scripts/list-models.mjs",
+    "predev": "node scripts/check-static.mjs && node scripts/list-models.mjs",
     "dev": "vite",
+    "prebuild": "node scripts/check-static.mjs && node scripts/list-models.mjs",
     "build": "vite build",
+    "lint": "oxlint",
     "preview": "vite preview"
   },
   "dependencies": {
-    "@supabase/supabase-js": "^2.86.0",
-    "react": "^18.3.1",
-    "react-dom": "^18.3.1"
+    "@ultralytics/yolo": "^0.0.45",
+    "onnxruntime-web": "^1.30.0",
+    "react": "^19.2.8",
+    "react-dom": "^19.2.8"
   },
   "devDependencies": {
-    "@vitejs/plugin-react": "^4.3.4",
-    "vite": "^6.0.11"
+    "@types/react": "^19.2.18",
+    "@types/react-dom": "^19.2.7",
+    "@vitejs/plugin-react": "^6.1.1",
+    "oxlint": "^1.81.0",
+    "vite": "^8.3.0"
   }
 }

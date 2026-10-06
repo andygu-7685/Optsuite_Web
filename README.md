@@ -1,7 +1,7 @@
 # USAF Registration
 
-Focus scoring of USAF 1951 resolution targets, plus a web UI for uploading source
-images. Scoring returns a `(group, element)` pair.
+Focus scoring of USAF 1951 resolution targets, plus a web UI that runs the
+detection model in the browser. Scoring returns a `(group, element)` pair.
 
 ## Quick start
 
@@ -11,9 +11,9 @@ With GNU Make, Python 3, and Node installed, run from the repo root:
 make
 ```
 
-This creates `.venv`, installs the Python and microscopy-poc dependencies,
+This creates `.venv`, installs the Python and frontend dependencies,
 exports the model to ONNX if the checkpoint is newer, and launches the
-microscopy-poc dev server. `make help` lists the other targets. After
+frontend dev server. `make help` lists the other targets. After
 retraining, `make export` (optionally `MODEL=usaf_registration/models/<name>.pt`)
 forces a re-export.
 
@@ -43,25 +43,11 @@ pip install itk-elastix
 
 ## Web frontend
 
-Apply [supabase/schema.sql](supabase/schema.sql) in the Supabase SQL editor first
-(creates the table, bucket, and RLS policies), then:
-
-```bash
-cd frontend
-npm install
-cp .env.example .env
-npm run dev
-```
-
-Fill in `.env` with your Supabase project URL and anon key.
-
-## In-browser detection (microscopy-poc)
-
 Runs the YOLO keypoint model in the browser with `@ultralytics/yolo`. No Python
 needed:
 
 ```bash
-cd microscopy-poc
+cd frontend
 npm install
 npm run dev
 ```
@@ -76,7 +62,7 @@ activated. The first run may pip-install `onnx` and `onnxslim`.
 python usaf_registration/export_model.py
 ```
 
-That exports `4p_detect_ultra_pro_max.pt` to `microscopy-poc/public/models/`. To
+That exports `4p_detect_ultra_pro_max.pt` to `frontend/public/models/`. To
 export a different checkpoint:
 
 ```bash

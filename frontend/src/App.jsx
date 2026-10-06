@@ -1,190 +1,149 @@
-import { useEffect, useMemo, useState } from "react";
-import FilePicker from "./components/FilePicker.jsx";
-import ImageTable from "./components/ImageTable.jsx";
-import LogPanel from "./components/LogPanel.jsx";
-import ResultViewer from "./components/ResultViewer.jsx";
-import { createDummyResult, formatTimestamp, isImageFile } from "./dummyData.js";
-import { isSupabaseConfigured } from "./supabaseClient.js";
-import { listSourceImages, uploadSourceImage } from "./supabaseImages.js";
+import {useEffect, useRef, useState } from 'react'
+import YOLO, { annotate } from '@ultralytics/yolo'
+import './App.css'
 
-let nextLogId = 1;
-
-function createImageRecord(file) {
-  return {
-    id: crypto.randomUUID(),
-    name: file.name,
-    path: file.webkitRelativePath || file.name,
-    size: file.size,
-    status: isSupabaseConfigured ? "uploading" : "processed",
-    file,
-  };
+const DEFAULT_MODEL = '4p_detect_ultra_pro_max.onnx'
+// <select> value for a model loaded from the user's disk instead of public/models.
+const LOCAL = 'local'
+const LOAD_OPTIONS = {
+  device: 'auto',
+  // Without this it fetches ORT from cdn.pyke.io at runtime.
+  ortBaseUrl: new URL('/ort/', window.location.origin),
 }
 
-// convert the database row to a record in javascript
-function recordFromDatabaseRow(row) {
-  return {
-    id: row.id,
-    name: row.name,
-    path: row.relative_path || row.name,
-    size: row.size_bytes,
-    status: "stored",
-  };
+function publicSource(file) {
+  return { key: file, label: file, src: `/models/${file}` }
 }
 
 export default function App() {
-  const [images, setImages] = useState([]);
-  const [selectedId, setSelectedId] = useState(null);
-  const [resultsById, setResultsById] = useState({});
-  const [logEntries, setLogEntries] = useState([]);
-  const [busy, setBusy] = useState(false);
+  const modelRef = useRef(null)
+  const imageRef = useRef(null)
+  const canvasRef = useRef(null)
+  const [models, setModels] = useState([])
+  const [localModel, setLocalModel] = useState(null)
+  // The model being shown; loadedSource is the last one whose load settled.
+  const [source, setSource] = useState(null)
+  const [loadedSource, setLoadedSource] = useState(null)
+  const [status, setStatus] = useState('loading models…')
+  const [predicting, setPredicting] = useState(false)
+  const [results, setResults] = useState(null)
 
-  const selectedImage = useMemo(
-    () => images.find((image) => image.id === selectedId) ?? null,
-    [images, selectedId]
-  );
-  const selectedResult = selectedId ? resultsById[selectedId] ?? null : null;
+  const loading = source !== loadedSource
 
-  function appendLogs(messages, level = "info") {
-    const time = formatTimestamp();
-    const entries = messages.map((message) => ({
-      id: `log-${nextLogId++}`,
-      time,
-      level,
-      message,
-    }));
-    setLogEntries((prev) => [...prev, ...entries]);
+  async function runPredict(model, file) {
+    setPredicting(true)
+    try {
+      const out = await model.predict(file, { conf: 0.3, iou: 0.3 })
+      await annotate(canvasRef.current, file, out, { keypoints: true })
+      setResults(out)
+    } catch (err) {
+      setStatus(`predict failed: ${err.message}`)
+    } finally {
+      setPredicting(false)
+    }
   }
 
-  function attachDummyResult(record) {
-    const result = createDummyResult(record.name);
-    setResultsById((prev) => ({ ...prev, [record.id]: result }));
-    return result;
-  }
-
-  function updateImage(id, patch) {
-    setImages((prev) => prev.map((image) => (image.id === id ? { ...image, ...patch } : image)));
-  }
+  // public/models/index.json is written by scripts/list-models.mjs before dev/build.
+  useEffect(() => {
+    fetch('/models/index.json')
+      .then((res) => {
+        if (!res.ok) throw new Error(`${res.status} ${res.statusText}`)
+        return res.json()
+      })
+      .then((list) => {
+        setModels(list)
+        const initial = list.find((m) => m.file === DEFAULT_MODEL) ?? list[0]
+        if (initial) setSource(publicSource(initial.file))
+        else setStatus('no models in public/models')
+      })
+      .catch((err) => setStatus(`failed to list models: ${err.message}`))
+  }, [])
 
   useEffect(() => {
-    if (!isSupabaseConfigured) {
-      appendLogs(
-        ["Supabase is not configured. Copy frontend/.env.example to frontend/.env and add your project URL and anon key."],
-        "warn"
-      );
-      return;
-    }
+    if (!source) return
+    let cancelled = false
+    let model = null
 
-    let cancelled = false;
+    YOLO.load(source.src, LOAD_OPTIONS)
+      .then((m) => {
+        if (cancelled) return m.free()
+        model = m
+        modelRef.current = m
+        setLoadedSource(source)
+        setStatus(`ready · ${source.label} · ${m.task} · ${m.device}`)
+        // Re-run the current image so switching models compares them directly.
+        if (imageRef.current) runPredict(m, imageRef.current)
+      })
+      .catch((err) => {
+        if (cancelled) return
+        setLoadedSource(source)
+        setStatus(`failed to load ${source.label}: ${err.message}`)
+      })
 
-    async function loadStoredImages() {
-      try {
-        const rows = await listSourceImages();
-        if (cancelled) return;
-
-        const records = rows.map(recordFromDatabaseRow);
-        const dummyResults = {};
-        records.forEach((record) => {
-          dummyResults[record.id] = createDummyResult(record.name);
-        });
-
-        setImages(records);
-        setResultsById(dummyResults);
-        setSelectedId(records[0]?.id ?? null);
-        appendLogs([`Connected to Supabase. Loaded ${records.length} stored image(s).`]);
-      } catch (error) {
-        if (!cancelled) {
-          appendLogs([`Failed to load images from Supabase: ${error.message}`], "warn");
-        }
-      }
-    }
-
-    loadStoredImages();
     return () => {
-      cancelled = true;
-    };
-    // Run once on startup.
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
-
-
-
-  
-
-  async function handleFilesSelected(files) {
-    const imageFiles = files.filter(isImageFile);
-
-    if (imageFiles.length === 0) {
-      appendLogs(["No image files found in that selection."], "warn");
-      return;
+      cancelled = true
+      if (modelRef.current === model) modelRef.current = null
+      model?.free()
     }
+  }, [source])
 
-    const records = imageFiles.map(createImageRecord);
-    setImages((prev) => [...records, ...prev]);
-    setSelectedId((prev) => prev ?? records[0].id);
-    appendLogs([`Selected ${records.length} image file(s).`]);
-
-    setBusy(true);
-    try {
-      for (const record of records) {
-        try {
-          if (isSupabaseConfigured) {
-            await uploadSourceImage(record.file, record.id);
-            updateImage(record.id, { status: "stored", file: undefined });
-            appendLogs([`Stored ${record.name} in Supabase Storage.`]);
-          }
-
-          const result = attachDummyResult(record);
-          updateImage(record.id, { status: "processed" });
-          appendLogs(result.report);
-        } catch (error) {
-          updateImage(record.id, { status: "error", file: undefined });
-          appendLogs([`Failed to store ${record.name}: ${error.message}`], "warn");
-        }
-      }
-    } finally {
-      setBusy(false);
-    }
+  function onFile(event) {
+    const file = event.target.files?.[0]
+    if (!file) return
+    // Remembered so it runs once a model finishes loading, and on every switch.
+    imageRef.current = file
+    if (modelRef.current) runPredict(modelRef.current, file)
   }
 
-  function handleClear() {
-    setImages([]);
-    setSelectedId(null);
-    setResultsById({});
-    setLogEntries([]);
+  function onSelectModel(event) {
+    const key = event.target.value
+    setSource(
+      key === LOCAL ? { key: LOCAL, label: localModel.name, src: localModel } : publicSource(key)
+    )
   }
+
+  function onModelFile(event) {
+    const file = event.target.files?.[0]
+    // Clear so picking the same file again still fires onChange.
+    event.target.value = ''
+    if (!file) return
+    setLocalModel(file)
+    setSource({ key: LOCAL, label: file.name, src: file })
+  }
+
+  // Freeing a model mid-predict breaks the in-flight call, so lock switching.
+  const switchDisabled = loading || predicting
 
   return (
-    <div className="app">
-      <header className="app-header">
-        <div>
-          <h1>USAF Registration</h1>
-          <p className="subtitle">Select images to store in Supabase, then review dummy process reports.</p>
-        </div>
-        <div className="header-actions">
-          <FilePicker onFilesSelected={handleFilesSelected} disabled={busy} />
-          <button type="button" className="btn btn-ghost" onClick={handleClear} disabled={images.length === 0 || busy}>
-            Clear
-          </button>
-        </div>
-      </header>
-
-      <main className="workspace">
-        <aside className="sidebar">
-          <section className="panel">
-            <h2>Images</h2>
-            <ImageTable images={images} selectedId={selectedId} onSelect={setSelectedId} />
-          </section>
-          <section className="panel log-section">
-            <h2>Process log</h2>
-            <LogPanel entries={logEntries} />
-          </section>
-        </aside>
-
-        <section className="panel result-section">
-          <h2>Result</h2>
-          <ResultViewer image={selectedImage} result={selectedResult} />
-        </section>
-      </main>
-    </div>
-  );
+    <main>
+      <div className="controls">
+        <label>
+          Model
+          <select
+            value={source?.key ?? ''}
+            onChange={onSelectModel}
+            disabled={switchDisabled || (models.length === 0 && !localModel)}
+          >
+            {models.map((m) => (
+              <option key={m.file} value={m.file}>
+                {m.file.replace(/\.onnx$/, '')}
+                {m.task ? ` (${m.task})` : ''}
+              </option>
+            ))}
+            {localModel && <option value={LOCAL}>{localModel.name} (local file)</option>}
+          </select>
+        </label>
+        <label className="button" aria-disabled={switchDisabled}>
+          Load .onnx…
+          <input type="file" accept=".onnx" hidden onChange={onModelFile} disabled={switchDisabled} />
+        </label>
+      </div>
+      <p>{loading ? `loading ${source.label}…` : status}</p>
+      <input type="file" accept="image/*" onChange={onFile} disabled={predicting} />
+      <canvas ref={canvasRef} style={{ maxWidth: '100%' }} />
+      {results && (
+        <pre>{JSON.stringify({ boxes: results.boxes, speed: results.speed }, null, 2)}</pre>
+      )}
+    </main>
+  )
 }

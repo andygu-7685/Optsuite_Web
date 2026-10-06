@@ -7,7 +7,7 @@ from ultralytics import YOLO
 
 BASE_DIR = Path(__file__).resolve().parent
 DEFAULT_MODEL = BASE_DIR / "models" / "4p_detect_ultra_pro_max.pt"
-DEFAULT_OUT = BASE_DIR.parent / "microscopy-poc" / "public" / "models"
+DEFAULT_OUT = BASE_DIR.parent / "frontend" / "public" / "models"
 
 
 def export(model_path: Path, imgsz: int, out_dir: Path, opset: int, simplify: bool):
