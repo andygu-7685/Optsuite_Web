@@ -78,3 +78,149 @@ pre {
   text-align: left;
   overflow-x: auto;
 }
+
+.status {
+  font-size: 15px;
+}
+
+.status-error {
+  color: #d9534f;
+}
+
+/* Model options ---------------------------------------------------------- */
+
+.options {
+  width: 100%;
+  box-sizing: border-box;
+  padding: 16px 20px 20px;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  text-align: left;
+}
+
+.options header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  margin-bottom: 16px;
+}
+
+.options header h2 {
+  margin: 0;
+  font-size: 18px;
+  letter-spacing: normal;
+}
+
+.options .button {
+  padding: 6px 14px;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  background: transparent;
+  color: var(--text);
+  font: inherit;
+  font-size: 14px;
+  cursor: pointer;
+}
+
+.options .button:disabled {
+  opacity: 0.5;
+  cursor: default;
+}
+
+.options-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+  gap: 16px 24px;
+}
+
+.field {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  font-size: 15px;
+}
+
+.field-label {
+  display: flex;
+  align-items: baseline;
+  gap: 8px;
+  color: var(--text-h);
+}
+
+/* The option's name in the library's API, so the panel maps to the docs. */
+.field-label em {
+  font: 13px var(--mono);
+  font-style: normal;
+  color: var(--text);
+}
+
+.field select {
+  padding: 8px 12px;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  background: transparent;
+  color: var(--text-h);
+  font: inherit;
+  font-size: 15px;
+}
+
+.slider {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.slider input[type='range'] {
+  flex: 1;
+  min-width: 0;
+  accent-color: var(--accent);
+}
+
+.slider input[type='range']:disabled {
+  opacity: 0.5;
+}
+
+.slider output {
+  flex: 0 0 56px;
+  font: 14px var(--mono);
+  color: var(--text-h);
+  text-align: right;
+  font-variant-numeric: tabular-nums;
+}
+
+.options-toggles,
+.classes {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px 20px;
+}
+
+.classes {
+  grid-column: 1 / -1;
+  margin: 0;
+  padding: 12px 16px;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+}
+
+.classes legend {
+  padding: 0 6px;
+  font-size: 14px;
+  color: var(--text);
+}
+
+.field-toggle {
+  flex-direction: row;
+  align-items: center;
+  gap: 8px;
+  cursor: pointer;
+}
+
+.field-toggle input[type='checkbox'] {
+  width: 16px;
+  height: 16px;
+  margin: 0;
+  accent-color: var(--accent);
+}
