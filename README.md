@@ -70,7 +70,23 @@ numbers: `scoreTable` is the scan order of
 row with its group, element, lp/mm, and bar width in µm, and `classes` maps a
 class id to the same fields for models whose labels name an element (`g3e4`).
 The frontend fills its Group/Element/lp-per-mm/bar-width tiles from that block,
-falling back to parsing the class label. To export a different checkpoint:
+falling back to parsing the class label. For a checkpoint whose labels name no
+element but whose class order is known, pin them with `--class-map` (repeatable;
+the left side is a class id or a class name):
+
+```bash
+python usaf_registration/export_model.py --model usaf_registration/models/single_pattern_scanline_v2.pt --class-map usaf_element=g6e2
+```
+
+Both halves are required — a group on its own has no lp/mm — and a bad mapping
+fails before the ONNX export runs.
+
+Every export also rewrites `public/models/index.json`, the list the app
+actually fetches, so a re-export shows up on reload even with the dev server
+already running. (`npm run dev`/`build` still rebuild it too, via
+`scripts/list-models.mjs`; both writers produce the same file.)
+
+To export a different checkpoint:
 
 ```bash
 python usaf_registration/export_model.py --model usaf_registration/models/<name>.pt
@@ -78,4 +94,5 @@ python usaf_registration/export_model.py --model usaf_registration/models/<name>
 
 Other options: `--imgsz` (default 640), `--opset` (default 17), `--out`,
 `--no-simplify`, and `--first-group` (default 2, as `UsafConfig.G1`; it sets the
-first group of the exported score table).
+first group of the exported score table, and so the group/element a scan index
+resolves to).

@@ -38,7 +38,7 @@
         "index": 3,
         "group": 3,
         "element": 1,
-        "lpPerMm": 8.0,
+        "lpPerMm": 8,
         "lineWidthUm": 62.5
       },
       {
@@ -80,7 +80,7 @@
         "index": 9,
         "group": 4,
         "element": 1,
-        "lpPerMm": 16.0,
+        "lpPerMm": 16,
         "lineWidthUm": 31.25
       },
       {
@@ -122,7 +122,7 @@
         "index": 15,
         "group": 5,
         "element": 1,
-        "lpPerMm": 32.0,
+        "lpPerMm": 32,
         "lineWidthUm": 15.625
       },
       {
@@ -164,7 +164,7 @@
         "index": 21,
         "group": 6,
         "element": 1,
-        "lpPerMm": 64.0,
+        "lpPerMm": 64,
         "lineWidthUm": 7.8125
       },
       {
@@ -206,7 +206,7 @@
         "index": 27,
         "group": 7,
         "element": 1,
-        "lpPerMm": 128.0,
+        "lpPerMm": 128,
         "lineWidthUm": 3.9062
       },
       {

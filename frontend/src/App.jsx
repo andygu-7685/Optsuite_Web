@@ -192,7 +192,7 @@ export default function App() {
         />
       )}
 
-      <canvas ref={canvasRef} style={{ maxWidth: '100%' }} />
+      <canvas ref={canvasRef} />
     </main>
   )
 }

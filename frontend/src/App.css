@@ -1,4 +1,5 @@
-/* Tokens from index.css. */
+/* Tokens from index.css. Element selectors are app-wide on purpose: this is a
+   single-page UI of two cards (.options, .results) and the controls they share. */
 
 main {
   display: flex;
@@ -8,75 +9,215 @@ main {
   padding: 32px 24px;
 }
 
-.controls {
-  display: flex;
-  flex-wrap: wrap;
-  align-items: center;
-  justify-content: center;
-  gap: 12px;
-  font-size: 15px;
-  color: var(--text);
+/* Cards ------------------------------------------------------------------ */
+
+.options,
+.results,
+.classes {
+  box-sizing: border-box;
+  width: 100%;
+  padding: 16px 20px 20px;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  text-align: left;
 }
 
-.controls select {
-  margin-left: 8px;
+.options header,
+.results header {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.options h2,
+.results h2 {
+  margin: 0;
+  font-size: 18px;
+  letter-spacing: normal;
+}
+
+/* Controls --------------------------------------------------------------- */
+
+select,
+.button,
+input[type='file'],
+input[type='file']::file-selector-button {
   padding: 8px 12px;
   border: 1px solid var(--border);
   border-radius: 8px;
   background: transparent;
   color: var(--text-h);
   font: inherit;
-}
-
-.controls .button {
-  padding: 8px 16px;
-  border: 1px solid var(--accent-border);
-  border-radius: 8px;
-  background: var(--accent-bg);
-  color: var(--accent);
+  font-size: 15px;
   cursor: pointer;
 }
 
-.controls .button[aria-disabled='true'],
-.controls select:disabled {
-  opacity: 0.5;
-  cursor: default;
+/* The two ways in: pick a model, pick an image. */
+.controls .button,
+input[type='file']::file-selector-button {
+  border-color: var(--accent-border);
+  background: var(--accent-bg);
+  color: var(--accent);
 }
 
 input[type='file'] {
-  font: inherit;
-  font-size: 15px;
-  color: var(--text);
+  padding: 0;
+  border: 0;
 }
 
 input[type='file']::file-selector-button {
   margin-right: 12px;
-  padding: 8px 16px;
-  border: 1px solid var(--accent-border);
-  border-radius: 8px;
-  background: var(--accent-bg);
-  color: var(--accent);
-  font: inherit;
+}
+
+:disabled,
+[aria-disabled='true'] {
+  opacity: 0.5;
+  cursor: default;
+}
+
+input {
+  accent-color: var(--accent);
+}
+
+.controls,
+.options-toggles,
+.classes {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px 20px;
+}
+
+.controls label,
+.field-label,
+.slider {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.options-grid,
+.stats {
+  display: grid;
+  gap: 12px 24px;
+}
+
+.options-grid {
+  grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+  margin-top: 16px;
+}
+
+.field {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
   font-size: 15px;
+  color: var(--text-h);
+}
+
+.field-toggle {
+  flex-direction: row;
+  align-items: center;
   cursor: pointer;
 }
 
-canvas {
-  border: 1px solid var(--border);
-  border-radius: 8px;
+.field-toggle input {
+  width: 16px;
+  height: 16px;
+  margin: 0;
+}
+
+.classes {
+  grid-column: 1 / -1;
+  padding: 12px 16px;
+}
+
+.classes legend {
+  padding: 0 6px;
+}
+
+.slider input[type='range'] {
+  flex: 1;
+  min-width: 0;
+}
+
+.slider output {
+  flex: 0 0 56px;
+  text-align: right;
+}
+
+/* Results ---------------------------------------------------------------- */
+
+.stats {
+  grid-template-columns: repeat(auto-fit, minmax(110px, 1fr));
+  margin: 16px 0;
+}
+
+.stats dd {
+  margin: 0;
+  font-size: 16px;
+}
+
+table {
+  width: 100%;
+  border-collapse: collapse;
+  white-space: nowrap;
+}
+
+th,
+td {
+  padding: 6px 12px 6px 0;
+  text-align: left;
+  border-bottom: 1px solid var(--border);
+}
+
+/* Tables and JSON stay inside the card. */
+.scroll,
+pre {
+  max-height: 320px;
+  overflow: auto;
 }
 
 pre {
-  width: 100%;
   margin: 0;
   padding: 16px;
-  box-sizing: border-box;
   border-radius: 8px;
   background: var(--code-bg);
+}
+
+details {
+  margin-top: 12px;
+}
+
+summary {
+  padding: 6px 0;
+  cursor: pointer;
+}
+
+/* Type ------------------------------------------------------------------- */
+
+/* Numbers, API option names and raw data all read as mono. */
+table,
+pre,
+.stats dd,
+.slider output,
+.field-label em {
+  font: 14px var(--mono);
+  font-style: normal;
   color: var(--text-h);
-  font: 14px/140% var(--mono);
-  text-align: left;
-  overflow-x: auto;
+  font-variant-numeric: tabular-nums;
+}
+
+/* Muted labels. */
+th,
+legend,
+summary,
+.stats dt,
+.field-label em {
+  font-size: 14px;
+  font-weight: 500;
+  color: var(--text);
 }
 
 .status {
@@ -87,254 +228,8 @@ pre {
   color: #d9534f;
 }
 
-/* Model options ---------------------------------------------------------- */
-
-.options {
-  width: 100%;
-  box-sizing: border-box;
-  padding: 16px 20px 20px;
+canvas {
+  max-width: 100%;
   border: 1px solid var(--border);
   border-radius: 8px;
-  text-align: left;
-}
-
-.options header {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 12px;
-  margin-bottom: 16px;
-}
-
-.options header h2 {
-  margin: 0;
-  font-size: 18px;
-  letter-spacing: normal;
-}
-
-.options .button {
-  padding: 6px 14px;
-  border: 1px solid var(--border);
-  border-radius: 8px;
-  background: transparent;
-  color: var(--text);
-  font: inherit;
-  font-size: 14px;
-  cursor: pointer;
-}
-
-.options .button:disabled {
-  opacity: 0.5;
-  cursor: default;
-}
-
-.options-grid {
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
-  gap: 16px 24px;
-}
-
-.field {
-  display: flex;
-  flex-direction: column;
-  gap: 6px;
-  font-size: 15px;
-}
-
-.field-label {
-  display: flex;
-  align-items: baseline;
-  gap: 8px;
-  color: var(--text-h);
-}
-
-/* API option name. */
-.field-label em {
-  font: 13px var(--mono);
-  font-style: normal;
-  color: var(--text);
-}
-
-.field select {
-  padding: 8px 12px;
-  border: 1px solid var(--border);
-  border-radius: 8px;
-  background: transparent;
-  color: var(--text-h);
-  font: inherit;
-  font-size: 15px;
-}
-
-.slider {
-  display: flex;
-  align-items: center;
-  gap: 12px;
-}
-
-.slider input[type='range'] {
-  flex: 1;
-  min-width: 0;
-  accent-color: var(--accent);
-}
-
-.slider input[type='range']:disabled {
-  opacity: 0.5;
-}
-
-.slider output {
-  flex: 0 0 56px;
-  font: 14px var(--mono);
-  color: var(--text-h);
-  text-align: right;
-  font-variant-numeric: tabular-nums;
-}
-
-.options-toggles,
-.classes {
-  display: flex;
-  flex-wrap: wrap;
-  align-items: center;
-  gap: 8px 20px;
-}
-
-.classes {
-  grid-column: 1 / -1;
-  margin: 0;
-  padding: 12px 16px;
-  border: 1px solid var(--border);
-  border-radius: 8px;
-}
-
-.classes legend {
-  padding: 0 6px;
-  font-size: 14px;
-  color: var(--text);
-}
-
-.field-toggle {
-  flex-direction: row;
-  align-items: center;
-  gap: 8px;
-  cursor: pointer;
-}
-
-.field-toggle input[type='checkbox'] {
-  width: 16px;
-  height: 16px;
-  margin: 0;
-  accent-color: var(--accent);
-}
-
-/* Results ---------------------------------------------------------------- */
-
-.results {
-  width: 100%;
-  box-sizing: border-box;
-  padding: 16px 20px 20px;
-  border: 1px solid var(--border);
-  border-radius: 8px;
-  text-align: left;
-}
-
-.results header {
-  display: flex;
-  align-items: baseline;
-  justify-content: space-between;
-  gap: 12px;
-  margin-bottom: 16px;
-}
-
-.results header h2 {
-  margin: 0;
-  font-size: 18px;
-  letter-spacing: normal;
-}
-
-.tiles {
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
-  gap: 12px;
-}
-
-.tile {
-  display: flex;
-  flex-direction: column;
-  gap: 4px;
-  padding: 12px 16px;
-  border: 1px solid var(--accent-border);
-  border-radius: 8px;
-  background: var(--accent-bg);
-}
-
-.tile-label {
-  display: flex;
-  align-items: baseline;
-  gap: 6px;
-  font-size: 14px;
-  color: var(--text);
-}
-
-.tile-label em {
-  font: 13px var(--mono);
-  font-style: normal;
-}
-
-.tile-value {
-  font: 500 28px/110% var(--heading);
-  color: var(--text-h);
-  font-variant-numeric: tabular-nums;
-}
-
-.results-meta {
-  margin-top: 12px;
-  color: var(--text);
-  font-family: var(--mono);
-  font-size: 13px;
-}
-
-.results-scroll {
-  margin-top: 16px;
-  overflow-x: auto;
-}
-
-.results-table {
-  width: 100%;
-  border-collapse: collapse;
-  font: 14px var(--mono);
-  color: var(--text-h);
-  font-variant-numeric: tabular-nums;
-  white-space: nowrap;
-}
-
-.results-table th,
-.results-table td {
-  padding: 6px 12px 6px 0;
-  text-align: left;
-}
-
-.results-table th {
-  font-weight: 500;
-  color: var(--text);
-  border-bottom: 1px solid var(--border);
-}
-
-.results-table tbody tr + tr td {
-  border-top: 1px solid var(--border);
-}
-
-.results details {
-  margin-top: 16px;
-  font-size: 14px;
-}
-
-.results summary {
-  cursor: pointer;
-  color: var(--text);
-}
-
-.results details pre,
-.results details .results-scroll {
-  margin-top: 12px;
-  max-height: 320px;
-  overflow: auto;
 }
