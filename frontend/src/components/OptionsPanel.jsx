@@ -50,20 +50,11 @@ function Toggle({ label, hint, checked, disabled, onChange }) {
 
 const ratio = (value) => value.toFixed(2)
 
-/**
- * Every option the app passes to the model, grouped by when it takes effect:
- * `device` reloads the model, the inference thresholds re-run `predict`, and
- * the drawing options only redraw the overlay.
- *
- * `names` and `task` come from the loaded model, so the class filter and the
- * keypoint controls only appear when the model actually has them.
- */
+/** Model, inference and overlay options. Class/keypoint controls show only when the model supports them. */
 export default function OptionsPanel({ settings, names, task, busy, onChange, onReset }) {
   const classIds = Object.keys(names ?? {})
     .map(Number)
     .sort((a, b) => a - b)
-  // A class filter is only meaningful for a multi-class model; omitting
-  // `classes` and selecting all of them mean the same thing.
   const showClasses = classIds.length > 1
   const selected = settings.classes
   const isPose = task === 'pose'
@@ -73,8 +64,7 @@ export default function OptionsPanel({ settings, names, task, busy, onChange, on
     if (checked) current.add(id)
     else current.delete(id)
     const next = [...current].sort((a, b) => a - b)
-    // All or none both mean "keep every class", matching the library's
-    // behaviour when `classes` is left out.
+    // All or none means no filter.
     onChange({ classes: next.length === 0 || next.length === classIds.length ? null : next })
   }
 

@@ -1,4 +1,4 @@
-/* Tokens (--text-h, --border, --accent, --code-bg, ...) come from index.css. */
+/* Tokens from index.css. */
 
 main {
   display: flex;
@@ -148,7 +148,7 @@ pre {
   color: var(--text-h);
 }
 
-/* The option's name in the library's API, so the panel maps to the docs. */
+/* API option name. */
 .field-label em {
   font: 13px var(--mono);
   font-style: normal;
@@ -223,4 +223,122 @@ pre {
   height: 16px;
   margin: 0;
   accent-color: var(--accent);
+}
+
+/* Results ---------------------------------------------------------------- */
+
+.results {
+  width: 100%;
+  box-sizing: border-box;
+  padding: 16px 20px 20px;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  text-align: left;
+}
+
+.results header {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 12px;
+  margin-bottom: 16px;
+}
+
+.results header h2 {
+  margin: 0;
+  font-size: 18px;
+  letter-spacing: normal;
+}
+
+.tiles {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+  gap: 12px;
+}
+
+.tile {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  padding: 12px 16px;
+  border: 1px solid var(--accent-border);
+  border-radius: 8px;
+  background: var(--accent-bg);
+}
+
+.tile-label {
+  display: flex;
+  align-items: baseline;
+  gap: 6px;
+  font-size: 14px;
+  color: var(--text);
+}
+
+.tile-label em {
+  font: 13px var(--mono);
+  font-style: normal;
+}
+
+.tile-value {
+  font: 500 28px/110% var(--heading);
+  color: var(--text-h);
+  font-variant-numeric: tabular-nums;
+}
+
+.results-note,
+.results-meta {
+  font-size: 14px;
+  color: var(--text);
+}
+
+.results-meta {
+  margin-top: 12px;
+  font-family: var(--mono);
+  font-size: 13px;
+}
+
+.results-scroll {
+  margin-top: 16px;
+  overflow-x: auto;
+}
+
+.results-table {
+  width: 100%;
+  border-collapse: collapse;
+  font: 14px var(--mono);
+  color: var(--text-h);
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+}
+
+.results-table th,
+.results-table td {
+  padding: 6px 12px 6px 0;
+  text-align: left;
+}
+
+.results-table th {
+  font-weight: 500;
+  color: var(--text);
+  border-bottom: 1px solid var(--border);
+}
+
+.results-table tbody tr + tr td {
+  border-top: 1px solid var(--border);
+}
+
+.results details {
+  margin-top: 16px;
+  font-size: 14px;
+}
+
+.results summary {
+  cursor: pointer;
+  color: var(--text);
+}
+
+.results details pre {
+  margin-top: 12px;
+  max-height: 320px;
+  overflow: auto;
 }

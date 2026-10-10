@@ -1,9 +1,6 @@
 import { LOCAL_MODEL } from '../lib/options'
 
-/**
- * Picks which .onnx to run: one of the exports listed in
- * public/models/index.json, or a file off the user's disk.
- */
+/** Pick a listed .onnx or a local file. */
 export default function ModelPicker({ models, value, localModel, disabled, onSelect, onLocalFile }) {
   return (
     <div className="controls">

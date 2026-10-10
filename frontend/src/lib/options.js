@@ -1,40 +1,27 @@
-// Everything the UI can hand the model, in one record: LoadOptions.device,
-// PredictOptions (conf / iou / classes) and AnnotateOptions. Persisted to
-// localStorage and mirrored into the query string, so a tuned configuration
-// survives a reload and can be shared as a link.
+// App settings, persisted to localStorage and mirrored to the query string.
 
 const STORAGE_KEY = 'optsuite:settings'
 
-// <select> value for a model loaded from the user's disk instead of
-// public/models. Never persisted: a File can't be named in a URL or reopened
-// on reload.
+// Local-file model key; never persisted.
 export const LOCAL_MODEL = 'local'
 
 export const DEVICES = ['auto', 'webgpu', 'cpu']
 
 export const DEFAULTS = {
-  // Which .onnx from public/models to load; filled in once the list arrives.
   model: null,
-  // LoadOptions.device. Changing it reloads the model.
   device: 'auto',
-  // PredictOptions. The library defaults are conf 0.25 / iou 0.7; these are the
-  // values the app used to pass hardcoded.
   conf: 0.3,
   iou: 0.3,
-  // PredictOptions.classes. null keeps every class, which is what omitting the
-  // option does.
+  // null = all classes
   classes: null,
-  // AnnotateOptions.
   labels: true,
   keypoints: true,
   keypointThreshold: 0.25,
-  // AnnotateOptions.lineWidth. 0 leaves it out so the library scales it to the
-  // image.
+  // 0 = auto
   lineWidth: 0,
 }
 
-// Each coercer takes either a native value (from localStorage JSON) or a string
-// (from the query string) and returns undefined to fall back to the default.
+// Coercers return undefined to fall back to the default.
 const number = (min, max) => (value) => {
   const parsed = Number(value)
   return Number.isFinite(parsed) && parsed >= min && parsed <= max ? parsed : undefined
@@ -81,10 +68,10 @@ export function readSettings() {
   try {
     stored = JSON.parse(localStorage.getItem(STORAGE_KEY))
   } catch {
-    // Unparseable or unavailable (private mode): fall through to the defaults.
+    // Use defaults.
   }
   const query = Object.fromEntries(new URLSearchParams(window.location.search))
-  // The query string wins, so a shared link overrides what is stored locally.
+  // Query string overrides storage.
   return { ...DEFAULTS, ...coerce(stored), ...coerce(query) }
 }
 
@@ -98,10 +85,10 @@ export function writeSettings(settings) {
   try {
     localStorage.setItem(STORAGE_KEY, JSON.stringify(settings))
   } catch {
-    // Quota or private mode. The in-memory settings still apply.
+    // Storage unavailable.
   }
 
-  // Only what differs from the defaults, to keep the shared link short.
+  // Only non-defaults, to keep URLs short.
   const params = new URLSearchParams()
   for (const key of Object.keys(COERCE)) {
     const value = settings[key]
