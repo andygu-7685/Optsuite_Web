@@ -285,14 +285,9 @@ pre {
   font-variant-numeric: tabular-nums;
 }
 
-.results-note,
-.results-meta {
-  font-size: 14px;
-  color: var(--text);
-}
-
 .results-meta {
   margin-top: 12px;
+  color: var(--text);
   font-family: var(--mono);
   font-size: 13px;
 }
@@ -337,7 +332,8 @@ pre {
   color: var(--text);
 }
 
-.results details pre {
+.results details pre,
+.results details .results-scroll {
   margin-top: 12px;
   max-height: 320px;
   overflow: auto;

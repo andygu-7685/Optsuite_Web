@@ -68,6 +68,12 @@ export default function App() {
       .catch((error) => setListError(new Error(`failed to list models: ${error.message}`)))
   }, [])
 
+  // export_model.py sidecar for the listed model: USAF table, class names, imgsz.
+  const meta = useMemo(
+    () => models.find((entry) => entry.file === settings.model) ?? null,
+    [models, settings.model],
+  )
+
   const source = useMemo(() => {
     if (settings.model === LOCAL_MODEL) {
       return localModel ? { key: LOCAL_MODEL, label: localModel.name, src: localModel } : null
@@ -182,6 +188,7 @@ export default function App() {
           predicting={predicting}
           conf={settings.conf}
           keypointThreshold={settings.keypointThreshold}
+          usaf={meta?.usaf ?? null}
         />
       )}
 

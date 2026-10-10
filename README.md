@@ -62,12 +62,20 @@ activated. The first run may pip-install `onnx` and `onnxslim`.
 python usaf_registration/export_model.py
 ```
 
-That exports `4p_detect_ultra_pro_max.pt` to `frontend/public/models/`. To
-export a different checkpoint:
+That exports `4p_detect_ultra_pro_max.pt` to `frontend/public/models/`,
+alongside a `.json` sidecar. Besides the class names and keypoint shape, the
+sidecar carries a `usaf` block so the browser does not re-derive USAF 1951
+numbers: `scoreTable` is the scan order of
+[constants.py](usaf_registration/constants.py) `initialize_score_table`, each
+row with its group, element, lp/mm, and bar width in µm, and `classes` maps a
+class id to the same fields for models whose labels name an element (`g3e4`).
+The frontend fills its Group/Element/lp-per-mm/bar-width tiles from that block,
+falling back to parsing the class label. To export a different checkpoint:
 
 ```bash
 python usaf_registration/export_model.py --model usaf_registration/models/<name>.pt
 ```
 
-Other options: `--imgsz` (default 640), `--opset` (default 17), `--out`, and
-`--no-simplify`.
+Other options: `--imgsz` (default 640), `--opset` (default 17), `--out`,
+`--no-simplify`, and `--first-group` (default 2, as `UsafConfig.G1`; it sets the
+first group of the exported score table).

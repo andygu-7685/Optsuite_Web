@@ -2,8 +2,9 @@ import {
   formatGroupElement,
   formatLineWidthUm,
   formatLpPerMm,
-  lpPerMm,
-  parseGroupElement,
+  lpPerMmOf,
+  resolveGroupElement,
+  usafScoreTable,
 } from '../lib/usaf'
 
 const DASH = '—'
@@ -21,16 +22,16 @@ function Tile({ label, hint, value }) {
 }
 
 /** One row per detection; classify models use top-1 as the only row. */
-function toRows(results) {
+function toRows(results, usaf) {
   if (results.boxes.length === 0 && results.probs) {
-    const { name, top1conf } = results.probs
-    return [{ name, conf: top1conf, groupElement: parseGroupElement(name), points: [] }]
+    const { name, top1, top1conf } = results.probs
+    return [{ name, conf: top1conf, groupElement: resolveGroupElement(usaf, top1, name), points: [] }]
   }
   return results.boxes.map((box, index) => ({
     name: box.name,
     conf: box.conf,
     box,
-    groupElement: parseGroupElement(box.name),
+    groupElement: resolveGroupElement(usaf, box.cls, box.name),
     points: results.keypoints?.[index]?.points ?? [],
   }))
 }
@@ -40,15 +41,14 @@ function finest(rows) {
   let best = null
   for (const row of rows) {
     if (!row.groupElement) continue
-    const { group, element } = row.groupElement
-    if (!best || lpPerMm(group, element) > lpPerMm(best.group, best.element)) best = row.groupElement
+    if (!best || lpPerMmOf(row.groupElement) > lpPerMmOf(best)) best = row.groupElement
   }
   return best
 }
 
-/** Detections in USAF terms. Group/element comes from class labels only. */
-export default function Results({ results, predicting, conf, keypointThreshold }) {
-  const rows = toRows(results)
+/** Detections in USAF terms, using the group/element and lp/mm the export carries. */
+export default function Results({ results, predicting, conf, keypointThreshold, usaf }) {
+  const rows = toRows(results, usaf)
   const best = finest(rows)
   const count = results.boxes.length
 
@@ -64,32 +64,12 @@ export default function Results({ results, predicting, conf, keypointThreshold }
         </p>
       </header>
 
-      {best ? (
-        <div className="tiles">
-          <Tile label="Group" value={best.group} />
-          <Tile label="Element" value={best.element} />
-          <Tile
-            label="Resolution"
-            hint="lp/mm"
-            value={formatLpPerMm(best.group, best.element)}
-          />
-          <Tile
-            label="Bar width"
-            hint="µm"
-            value={formatLineWidthUm(best.group, best.element)}
-          />
-        </div>
-      ) : (
-        <p className="results-note">
-          {'No group/element in this model’s labels: '}
-          <code>{rows[0]?.name ?? 'no detections'}</code>
-          {' is the registration step, and scoring to a group/element runs in Python, in '}
-          <code>score_pattern_crops</code>
-          {'. A model whose classes are named per element — '}
-          <code>g3e4</code>
-          {' — fills these in.'}
-        </p>
-      )}
+      <div className="tiles">
+        <Tile label="Group" value={best ? best.group : DASH} />
+        <Tile label="Element" value={best ? best.element : DASH} />
+        <Tile label="Resolution" hint="lp/mm" value={best ? formatLpPerMm(best) : DASH} />
+        <Tile label="Bar width" hint="µm" value={best ? formatLineWidthUm(best) : DASH} />
+      </div>
 
       {rows.length > 0 && (
         <div className="results-scroll">
@@ -117,8 +97,8 @@ export default function Results({ results, predicting, conf, keypointThreshold }
                     <td>{row.name}</td>
                     <td>{row.conf.toFixed(3)}</td>
                     <td>{ge ? formatGroupElement(ge) : DASH}</td>
-                    <td>{ge ? formatLpPerMm(ge.group, ge.element) : DASH}</td>
-                    <td>{ge ? formatLineWidthUm(ge.group, ge.element) : DASH}</td>
+                    <td>{ge ? formatLpPerMm(ge) : DASH}</td>
+                    <td>{ge ? formatLineWidthUm(ge) : DASH}</td>
                     <td>
                       {box
                         ? `${box.x1.toFixed(0)}, ${box.y1.toFixed(0)}, ${box.x2.toFixed(0)}, ${box.y2.toFixed(0)}`
@@ -146,6 +126,32 @@ export default function Results({ results, predicting, conf, keypointThreshold }
         {`${results.width} × ${results.height} px · ${results.speed.preprocess.toFixed(1)} ms pre · `}
         {`${results.speed.inference.toFixed(1)} ms inference · ${results.speed.postprocess.toFixed(1)} ms post`}
       </p>
+
+      <details>
+        <summary>USAF table</summary>
+        <div className="results-scroll">
+          <table className="results-table">
+            <thead>
+              <tr>
+                <th>Scan</th>
+                <th>Group/element</th>
+                <th>lp/mm</th>
+                <th>Bar µm</th>
+              </tr>
+            </thead>
+            <tbody>
+              {usafScoreTable(usaf).map((row) => (
+                <tr key={row.index}>
+                  <td>{row.index}</td>
+                  <td>{formatGroupElement(row)}</td>
+                  <td>{formatLpPerMm(row)}</td>
+                  <td>{formatLineWidthUm(row)}</td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+      </details>
 
       <details>
         <summary>Raw results</summary>

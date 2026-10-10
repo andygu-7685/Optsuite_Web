@@ -1,5 +1,6 @@
 // USAF 1951 math, mirroring usaf_registration/helper.py.
-// Group/element is parsed from class labels (e.g. "g3e4"); models without such labels report none.
+// Group/element and lp/mm come from the model's exported `usaf` block
+// (usaf_registration/export_model.py); class labels like "g3e4" are the fallback.
 
 // constants.py UsafConfig.G1
 export const FIRST_GROUP = 2
@@ -28,6 +29,11 @@ export function scoreTable(firstGroup = FIRST_GROUP) {
   return rows.map((row, index) => ({ index, ...row }))
 }
 
+/** The exported scan order if the model carries one, else the mirrored table. */
+export function usafScoreTable(usaf) {
+  return usaf?.scoreTable?.length ? usaf.scoreTable : scoreTable(usaf?.firstGroup ?? FIRST_GROUP)
+}
+
 // "g3e4", "G3_E4", "group 3 element 4"; "g-1e3" is group -1.
 const LABELLED = /g(?:roup)?\s*(?:[-_ ](?!\d))?(-?\d+)\s*[-_ ]?e(?:lement)?\s*[-_ ]?([1-6])(?!\d)/i
 // "3-4", "3 4", "[3, 4]"
@@ -45,16 +51,34 @@ export function parseGroupElement(label) {
   return { group, element }
 }
 
+/** Group/element for one detection: the model's exported class map first, then its label. */
+export function resolveGroupElement(usaf, cls, label) {
+  const exported = usaf?.classes?.[cls]
+  if (exported && Number.isInteger(exported.group) && Number.isInteger(exported.element)) return exported
+  return parseGroupElement(label)
+}
+
+/** Exported lp/mm wins so the Python scorer stays the source of truth. */
+export function lpPerMmOf({ group, element, lpPerMm: exported }) {
+  return typeof exported === 'number' ? exported : lpPerMm(group, element)
+}
+
+export function lineWidthUmOf({ group, element, lineWidthUm: exported }) {
+  return typeof exported === 'number' ? exported : lineWidthUm(group, element)
+}
+
 export function formatGroupElement({ group, element }) {
   return `G${group} E${element}`
 }
 
-export function formatLpPerMm(group, element) {
-  const value = lpPerMm(group, element)
+function format(value) {
   return value >= 100 ? value.toFixed(0) : value.toFixed(2)
 }
 
-export function formatLineWidthUm(group, element) {
-  const value = lineWidthUm(group, element)
-  return value >= 100 ? value.toFixed(0) : value.toFixed(2)
+export function formatLpPerMm(groupElement) {
+  return format(lpPerMmOf(groupElement))
+}
+
+export function formatLineWidthUm(groupElement) {
+  return format(lineWidthUmOf(groupElement))
 }
