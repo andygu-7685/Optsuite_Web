@@ -16,6 +16,8 @@ export const DEFAULTS = {
   classes: null,
   labels: true,
   keypoints: true,
+  // Identified USAF elements over the frame.
+  elements: true,
   keypointThreshold: 0.25,
   // 0 = auto
   lineWidth: 0,
@@ -48,6 +50,7 @@ const COERCE = {
   classes: classList,
   labels: boolean,
   keypoints: boolean,
+  elements: boolean,
   keypointThreshold: number(0, 1),
   lineWidth: number(0, 24),
 }

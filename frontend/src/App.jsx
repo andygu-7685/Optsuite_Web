@@ -3,9 +3,13 @@ import { annotate } from '@ultralytics/yolo'
 import ModelPicker from './components/ModelPicker'
 import OptionsPanel from './components/OptionsPanel'
 import Results from './components/Results'
+import TargetOverlay from './components/TargetOverlay'
 import { useDebouncedValue } from './hooks/useDebouncedValue'
 import { useModel } from './hooks/useModel'
 import { usePrediction } from './hooks/usePrediction'
+import { drawElements } from './lib/draw'
+import { identify } from './lib/identify'
+import { pixelsOf } from './lib/pixels'
 import {
   DEFAULTS,
   LOCAL_MODEL,
@@ -100,10 +104,19 @@ export default function App() {
 
   const { results, predicting, error: predictError } = usePrediction(model, image, predictOpts)
 
-  const { labels, keypoints, keypointThreshold, lineWidth } = settings
+  const { labels, keypoints, keypointThreshold, lineWidth, elements } = settings
   const annotateOpts = useMemo(
     () => annotateOptions({ labels, keypoints, keypointThreshold, lineWidth }),
     [labels, keypoints, keypointThreshold, lineWidth],
+  )
+
+  // Read once per image; identify uses it to settle the layout onto the bars.
+  const pixels = useMemo(() => pixelsOf(image), [image])
+
+  // Group/element, lp/mm and where each element landed, from the model's keypoints.
+  const identified = useMemo(
+    () => identify(results, meta?.usaf ?? null, keypointThreshold, pixels),
+    [results, meta, keypointThreshold, pixels],
   )
 
   useEffect(() => {
@@ -114,9 +127,13 @@ export default function App() {
     const canvas = canvasRef.current
     if (!canvas || !image || !results) return
     drawRef.current = drawRef.current
-      .then(() => annotate(canvas, image, results, annotateOpts))
+      .then(async () => {
+        await annotate(canvas, image, results, annotateOpts)
+        // After annotate, which clears the canvas before redrawing the frame.
+        if (elements) drawElements(canvas, identified.elements, { labels, lineWidth })
+      })
       .catch((error) => setImageError(new Error(`draw failed: ${error.message}`)))
-  }, [image, results, annotateOpts])
+  }, [image, results, annotateOpts, identified, elements, labels, lineWidth])
 
   async function onImageFile(event) {
     const file = event.target.files?.[0]
@@ -185,14 +202,16 @@ export default function App() {
       {results && (
         <Results
           results={results}
+          identified={identified}
           predicting={predicting}
           conf={settings.conf}
           keypointThreshold={settings.keypointThreshold}
-          usaf={meta?.usaf ?? null}
         />
       )}
 
       <canvas ref={canvasRef} />
+
+      {results && <TargetOverlay elements={identified.elements} score={identified.score} />}
     </main>
   )
 }

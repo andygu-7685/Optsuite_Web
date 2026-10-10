@@ -154,6 +154,14 @@ export default function OptionsPanel({ settings, names, task, busy, onChange, on
               onChange={(keypoints) => onChange({ keypoints })}
             />
           )}
+          {isPose && (
+            <Toggle
+              label="Elements"
+              hint="group + lp/mm"
+              checked={settings.elements}
+              onChange={(elements) => onChange({ elements })}
+            />
+          )}
         </div>
 
         {showClasses && (

@@ -13,6 +13,7 @@ main {
 
 .options,
 .results,
+.overlay,
 .classes {
   box-sizing: border-box;
   width: 100%;
@@ -31,7 +32,8 @@ main {
 }
 
 .options h2,
-.results h2 {
+.results h2,
+.overlay h2 {
   margin: 0;
   font-size: 18px;
   letter-spacing: normal;
@@ -232,4 +234,48 @@ canvas {
   max-width: 100%;
   border: 1px solid var(--border);
   border-radius: 8px;
+}
+
+/* Target overlay --------------------------------------------------------- */
+
+.overlay svg {
+  display: block;
+  width: 100%;
+  max-width: 620px;
+  margin: 12px auto;
+  border-radius: 8px;
+  /* The reference target is black; keep it so in either theme. */
+  background: #000;
+}
+
+.overlay rect {
+  fill: none;
+  stroke-width: 1.25;
+  vector-effect: non-scaling-stroke;
+}
+
+.overlay text {
+  font: 500 6px var(--mono);
+  letter-spacing: -0.2px;
+  paint-order: stroke;
+  stroke: rgb(0 0 0 / 70%);
+  stroke-width: 2.5;
+  vector-effect: non-scaling-stroke;
+}
+
+.overlay .resolved rect {
+  stroke: var(--accent);
+}
+
+.overlay .resolved text {
+  fill: var(--accent);
+}
+
+.overlay .unresolved rect {
+  stroke: #8b8b96;
+  stroke-dasharray: 3 2;
+}
+
+.overlay .unresolved text {
+  fill: #8b8b96;
 }

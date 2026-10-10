@@ -69,8 +69,8 @@ numbers: `scoreTable` is the scan order of
 [constants.py](usaf_registration/constants.py) `initialize_score_table`, each
 row with its group, element, lp/mm, and bar width in µm, and `classes` maps a
 class id to the same fields for models whose labels name an element (`g3e4`).
-The frontend fills its Group/Element/lp-per-mm/bar-width tiles from that block,
-falling back to parsing the class label. For a checkpoint whose labels name no
+The frontend reads its group, element, lp/mm and bar-width columns from that
+block, falling back to parsing the class label. For a checkpoint whose labels name no
 element but whose class order is known, pin them with `--class-map` (repeatable;
 the left side is a class id or a class name):
 
@@ -96,3 +96,33 @@ Other options: `--imgsz` (default 640), `--opset` (default 17), `--out`,
 `--no-simplify`, and `--first-group` (default 2, as `UsafConfig.G1`; it sets the
 first group of the exported score table, and so the group/element a scan index
 resolves to).
+
+### Identifying elements
+
+A class map only names the element a model was trained on. The four-keypoint
+model instead reports the corners of the target's outline, and that is enough to
+place every scanned element without any per-element class: the frontend fits a
+homography from those corners onto the image, then projects the element layout
+through it. Each element comes back with its group, element, lp/mm and bar width,
+drawn on the frame and listed under *Identified elements*.
+
+The layout is
+[frontend/src/lib/targetLayout.js](frontend/src/lib/targetLayout.js), mirroring
+[constants.py](usaf_registration/constants.py) `group_positions` the way
+`lib/usaf.js` mirrors `helper.py` — it is the target's fixed geometry, not a
+per-model number, so it does not travel in the sidecar. It also carries where the
+model puts its keypoints in target coordinates, measured by running the model on
+the bundled reference target rather than assumed.
+
+Those keypoints are good to a few percent of the target width, which names an
+element but does not box one, so `lib/refine.js` then searches a tightly bounded
+scale and shift for the alignment that puts the most bar inside the boxes. This
+is a small stand-in for the registration the Python scorer does with
+`classic_warp.py` and `sift_warp.py`; the *Results* header says when it moved.
+
+Two limits worth knowing. The layout covers the 33 rows of the scan table, so
+elements the Python scorer never scans (group 2 elements 5 and 6) are not drawn.
+And resolved versus unresolved comes from the detections: the finest
+group/element any detection names is taken as the score, elements at or below it
+draw solid and finer ones dashed. With a model that only finds whole patterns
+there is no such detection, and every element is drawn as identified.
