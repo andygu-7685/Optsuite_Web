@@ -20,7 +20,10 @@ const BOXES = ELEMENTS.map((element) => ({ index: element.index, ...place(elemen
 /**
  * Where each scanned element sits on the target, drawn on the reference image
  * rather than the uploaded one so the layout reads the same whatever was
- * photographed. Solid elements are at or below the score, dashed are past it.
+ * photographed. Each box carries what the scanlines measured there: solid where
+ * the contrast held, dashed where it gave out, and dotted past the point where
+ * one bar covers less than a pixel and the answer is the sampling grid's rather
+ * than the lens's.
  */
 export default function TargetOverlay({ elements, score }) {
   if (elements.length === 0) return null
@@ -38,10 +41,11 @@ export default function TargetOverlay({ elements, score }) {
       >
         <image href={reference} x="0" y="0" width={REFERENCE.width} height={REFERENCE.height} />
         {rows.map((row) => (
-          <g key={row.index} className={row.resolved ? 'resolved' : 'unresolved'}>
+          <g key={row.index} className={row.state}>
             <rect x={row.x} y={row.y} width={row.width} height={row.height} rx="1">
               <title>
-                {`${formatGroupElement(row)} · ${formatLpPerMm(row)} lp/mm · ${formatLineWidthUm(row)} µm bars`}
+                {`${formatGroupElement(row)} · ${formatLpPerMm(row)} lp/mm · ${formatLineWidthUm(row)} µm bars · ` +
+                  `contrast ${row.contrast.toFixed(3)} · ${row.state}`}
               </title>
             </rect>
             {row.width >= MIN_LABEL_WIDTH && row.height >= MIN_LABEL_HEIGHT && (
@@ -53,10 +57,8 @@ export default function TargetOverlay({ elements, score }) {
         ))}
       </svg>
       <p className="status">
-        Reference image ·{' '}
-        {score
-          ? `solid: at or below ${formatGroupElement(score)} · dashed: finer`
-          : 'no score yet, every element identified'}
+        Reference image · solid: contrast held · dashed: contrast gave out · dotted: under-sampled
+        {score && ` · score ${formatGroupElement(score)}`}
       </p>
     </section>
   )

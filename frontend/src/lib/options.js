@@ -1,5 +1,8 @@
 // App settings, persisted to localStorage and mirrored to the query string.
 
+import { METHODS } from './scan'
+import { RULES } from './score'
+
 const STORAGE_KEY = 'optsuite:settings'
 
 // Local-file model key; never persisted.
@@ -16,11 +19,21 @@ export const DEFAULTS = {
   classes: null,
   labels: true,
   keypoints: true,
-  // Identified USAF elements over the frame.
+  // Measured USAF elements over the frame.
   elements: true,
+  // The two scanlines each element was measured along.
+  scanlines: false,
   keypointThreshold: 0.25,
   // 0 = auto
   lineWidth: 0,
+
+  // Scoring, mirroring constants.py. `method` is SCORE_METHOD, how the two bar
+  // directions merge; `threshold` is SCORE_THRESHOLD; `rule` is
+  // FOCUS_GROUP_LAST_ABOVE_THRESHOLD; `dipRule` is GRADIENT_MIN.
+  method: 'min',
+  threshold: 0.2,
+  rule: 'cutoff',
+  dipRule: false,
 }
 
 // Coercers return undefined to fall back to the default.
@@ -51,8 +64,13 @@ const COERCE = {
   labels: boolean,
   keypoints: boolean,
   elements: boolean,
+  scanlines: boolean,
   keypointThreshold: number(0, 1),
   lineWidth: number(0, 24),
+  method: (value) => (METHODS.includes(value) ? value : undefined),
+  threshold: number(0, 1),
+  rule: (value) => (RULES.includes(value) ? value : undefined),
+  dipRule: boolean,
 }
 
 function coerce(raw) {
@@ -113,4 +131,9 @@ export function annotateOptions({ labels, keypoints, keypointThreshold, lineWidt
   const options = { labels, keypoints, keypointThreshold }
   if (lineWidth > 0) options.lineWidth = lineWidth
   return options
+}
+
+/** What lib/analyze.js needs: everything that changes a measurement or a score. */
+export function analyzeOptions({ keypointThreshold, method, threshold, rule, dipRule }) {
+  return { keypointThreshold, method, threshold, rule, dipRule }
 }

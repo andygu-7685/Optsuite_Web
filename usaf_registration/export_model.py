@@ -10,11 +10,9 @@ BASE_DIR = Path(__file__).resolve().parent
 DEFAULT_MODEL = BASE_DIR / "models" / "4p_detect_ultra_pro_max.pt"
 DEFAULT_OUT = BASE_DIR.parent / "frontend" / "public" / "models"
 
-# USAF 1951 math, mirroring helper.py; the scan order mirrors
-# constants.py UsafConfig.initialize_score_table. Kept standalone so exporting
-# does not construct a UsafConfig (which creates a logs/ directory).
+# USAF 1951 math, mirroring helper.py. Kept standalone so exporting does not
+# construct a UsafConfig (which creates a logs/ directory).
 FIRST_GROUP = 2  # constants.py UsafConfig.G1
-ELEMENTS = (1, 2, 3, 4, 5, 6)
 
 # Class labels that name an element: "g3e4", "G3_E4", "group 3 element 4", "3-4".
 # Mirrors parseGroupElement in frontend/src/lib/usaf.js.
@@ -99,21 +97,14 @@ def parse_class_map(specs, names: dict) -> dict:
     return mapping
 
 
-def score_table(first_group: int = FIRST_GROUP) -> list:
-    """Scan order: elements 2-4 of the first group, then five full groups."""
-    rows = [(first_group, element) for element in (2, 3, 4)]
-    for offset in range(1, 6):
-        rows.extend((first_group + offset, element) for element in ELEMENTS)
-    return [{"index": index, **resolution(group, element)} for index, (group, element) in enumerate(rows)]
-
-
 def usaf_meta(names: dict, first_group: int = FIRST_GROUP, class_map: dict | None = None) -> dict:
-    """Group/element + lp/mm the browser cannot derive on its own.
+    """Group/element + lp/mm the browser cannot read off the checkpoint.
 
     `classes` is filled for models whose class labels name an element ("g3e4"),
-    plus anything `--class-map` pins by hand; `scoreTable` is the scan order
-    scoring walks, so a scan index maps to a group/element without re-deriving
-    the table in JS.
+    plus anything `--class-map` pins by hand. `firstGroup` is only the fallback:
+    how many nested patterns the model finds says which group the outermost one
+    starts at (usaf_algo.py `G1 = 8 - pattern_count * 2`), and the frontend
+    builds the scan table from that, so the table itself does not travel here.
     """
     classes = {}
     for index, label in names.items():
@@ -121,11 +112,7 @@ def usaf_meta(names: dict, first_group: int = FIRST_GROUP, class_map: dict | Non
         if parsed:
             classes[int(index)] = resolution(*parsed)
     classes.update(class_map or {})
-    return {
-        "firstGroup": int(first_group),
-        "classes": classes,
-        "scoreTable": score_table(first_group),
-    }
+    return {"firstGroup": int(first_group), "classes": classes}
 
 
 def write_index(out_dir: Path) -> list:

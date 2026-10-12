@@ -7,12 +7,13 @@ import TargetOverlay from './components/TargetOverlay'
 import { useDebouncedValue } from './hooks/useDebouncedValue'
 import { useModel } from './hooks/useModel'
 import { usePrediction } from './hooks/usePrediction'
+import { analyze } from './lib/analyze'
 import { drawElements } from './lib/draw'
-import { identify } from './lib/identify'
 import { pixelsOf } from './lib/pixels'
 import {
   DEFAULTS,
   LOCAL_MODEL,
+  analyzeOptions,
   annotateOptions,
   predictOptions,
   readSettings,
@@ -104,19 +105,25 @@ export default function App() {
 
   const { results, predicting, error: predictError } = usePrediction(model, image, predictOpts)
 
-  const { labels, keypoints, keypointThreshold, lineWidth, elements } = settings
+  const { labels, keypoints, keypointThreshold, lineWidth, elements, scanlines } = settings
   const annotateOpts = useMemo(
     () => annotateOptions({ labels, keypoints, keypointThreshold, lineWidth }),
     [labels, keypoints, keypointThreshold, lineWidth],
   )
 
-  // Read once per image; identify uses it to settle the layout onto the bars.
+  // Read once per image; everything downstream measures against this plane.
   const pixels = useMemo(() => pixelsOf(image), [image])
 
-  // Group/element, lp/mm and where each element landed, from the model's keypoints.
-  const identified = useMemo(
-    () => identify(results, meta?.usaf ?? null, keypointThreshold, pixels),
-    [results, meta, keypointThreshold, pixels],
+  const { method, threshold, rule, dipRule } = settings
+  const analyzeOpts = useMemo(
+    () => analyzeOptions({ keypointThreshold, method, threshold, rule, dipRule }),
+    [keypointThreshold, method, threshold, rule, dipRule],
+  )
+
+  // Where the target is, what every element measured, and what that scores.
+  const analysis = useMemo(
+    () => analyze(results, meta?.usaf ?? null, pixels, analyzeOpts),
+    [results, meta, pixels, analyzeOpts],
   )
 
   useEffect(() => {
@@ -130,10 +137,10 @@ export default function App() {
       .then(async () => {
         await annotate(canvas, image, results, annotateOpts)
         // After annotate, which clears the canvas before redrawing the frame.
-        if (elements) drawElements(canvas, identified.elements, { labels, lineWidth })
+        if (elements) drawElements(canvas, analysis.elements, { labels, lineWidth, scanlines })
       })
       .catch((error) => setImageError(new Error(`draw failed: ${error.message}`)))
-  }, [image, results, annotateOpts, identified, elements, labels, lineWidth])
+  }, [image, results, annotateOpts, analysis, elements, labels, lineWidth, scanlines])
 
   async function onImageFile(event) {
     const file = event.target.files?.[0]
@@ -172,6 +179,7 @@ export default function App() {
   let status
   if (loading) status = `loading ${source.label}…`
   else if (error) status = error.message
+  else if (model && image && !pixels) status = `ready · ${source.label} · frame could not be read back, no measurement`
   else if (model) status = `ready · ${source.label} · ${task} · ${ranOn}`
   else status = 'loading models…'
 
@@ -202,16 +210,17 @@ export default function App() {
       {results && (
         <Results
           results={results}
-          identified={identified}
+          analysis={analysis}
           predicting={predicting}
           conf={settings.conf}
           keypointThreshold={settings.keypointThreshold}
+          settings={settings}
         />
       )}
 
       <canvas ref={canvasRef} />
 
-      {results && <TargetOverlay elements={identified.elements} score={identified.score} />}
+      {results && <TargetOverlay elements={analysis.elements} score={analysis.score} />}
     </main>
   )
 }

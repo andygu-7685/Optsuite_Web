@@ -143,6 +143,27 @@ export const PATTERN_CORNERS = [
   [2.739, -5.714],
 ]
 
+/**
+ * The same group and element, as a row of the layout one nesting level in — or
+ * null where this row has no counterpart there.
+ *
+ * A USAF target carries a quarter-scale copy of itself, so the layout is
+ * self-similar: two groups finer is the same pattern four times smaller. Row 15
+ * of the table is the first element of the fifth group, and the nested copy's
+ * own row 3 is the first element of its fifth group, which is the same bars.
+ * The three rows that start the table are the odd ones out, since only elements
+ * 2 to 4 of the first group are scanned.
+ *
+ * Checked against the table rather than assumed: fitting a similarity from each
+ * row's box to its counterpart's gives a scale of 0.2494 and 0.19 degrees of
+ * rotation, with every box landing within 0.2% of the target's width.
+ */
+export function nestedRow(index) {
+  if (index >= 15) return index - 12
+  if (index >= 10 && index <= 12) return index - 10
+  return null
+}
+
 function segment(index) {
   return [POINTS[2 * index], POINTS[2 * index + 1]]
 }

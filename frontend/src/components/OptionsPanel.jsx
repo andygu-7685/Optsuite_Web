@@ -1,4 +1,6 @@
 import { DEVICES } from '../lib/options'
+import { METHODS } from '../lib/scan'
+import { RULES } from '../lib/score'
 
 function Field({ label, hint, children }) {
   return (
@@ -48,9 +50,30 @@ function Toggle({ label, hint, checked, disabled, onChange }) {
   )
 }
 
+function Choice({ label, hint, value, options, onChange }) {
+  return (
+    <Field label={label} hint={hint}>
+      <select value={value} onChange={(event) => onChange(event.target.value)}>
+        {options.map((option) => (
+          <option key={option} value={option}>
+            {option}
+          </option>
+        ))}
+      </select>
+    </Field>
+  )
+}
+
 const ratio = (value) => value.toFixed(2)
 
-/** Model, inference and overlay options. Class/keypoint controls show only when the model supports them. */
+/**
+ * Model, inference, scoring and overlay options. Class and keypoint controls
+ * show only when the model supports them, and the scoring controls only for the
+ * pose model, since measuring needs an outline to place the scanlines against.
+ *
+ * The scoring four are constants.py by another name: SCORE_METHOD,
+ * SCORE_THRESHOLD, FOCUS_GROUP_LAST_ABOVE_THRESHOLD and GRADIENT_MIN.
+ */
 export default function OptionsPanel({ settings, names, task, busy, onChange, onReset }) {
   const classIds = Object.keys(names ?? {})
     .map(Number)
@@ -128,14 +151,46 @@ export default function OptionsPanel({ settings, names, task, busy, onChange, on
         {isPose && (
           <Slider
             label="Keypoint threshold"
-            hint="overlay"
+            hint="fit"
             value={settings.keypointThreshold}
             min={0}
             max={1}
             step={0.01}
             format={ratio}
-            disabled={!settings.keypoints}
             onChange={(keypointThreshold) => onChange({ keypointThreshold })}
+          />
+        )}
+
+        {isPose && (
+          <Slider
+            label="Contrast threshold"
+            hint="score"
+            value={settings.threshold}
+            min={0}
+            max={1}
+            step={0.01}
+            format={ratio}
+            onChange={(threshold) => onChange({ threshold })}
+          />
+        )}
+
+        {isPose && (
+          <Choice
+            label="Merge directions"
+            hint="score"
+            value={settings.method}
+            options={METHODS}
+            onChange={(method) => onChange({ method })}
+          />
+        )}
+
+        {isPose && (
+          <Choice
+            label="Cutoff rule"
+            hint="score"
+            value={settings.rule}
+            options={RULES}
+            onChange={(rule) => onChange({ rule })}
           />
         )}
 
@@ -160,6 +215,23 @@ export default function OptionsPanel({ settings, names, task, busy, onChange, on
               hint="group + lp/mm"
               checked={settings.elements}
               onChange={(elements) => onChange({ elements })}
+            />
+          )}
+          {isPose && (
+            <Toggle
+              label="Scanlines"
+              hint="what was measured"
+              checked={settings.scanlines}
+              disabled={!settings.elements}
+              onChange={(scanlines) => onChange({ scanlines })}
+            />
+          )}
+          {isPose && (
+            <Toggle
+              label="Require dips"
+              hint="one per gap"
+              checked={settings.dipRule}
+              onChange={(dipRule) => onChange({ dipRule })}
             />
           )}
         </div>

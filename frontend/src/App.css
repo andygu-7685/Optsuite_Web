@@ -279,3 +279,183 @@ canvas {
 .overlay .unresolved text {
   fill: #8b8b96;
 }
+
+/* Past the sampling limit: the pixel grid ran out, not the lens. */
+.overlay .undersampled rect {
+  stroke: #eb6834;
+  stroke-dasharray: 1 2;
+}
+
+.overlay .undersampled text {
+  fill: #eb6834;
+}
+
+/* Contrast transfer curve ------------------------------------------------ */
+
+/* Series colours are the data-viz categorical slots 1 and 2, stepped per mode
+   for the surface they sit on. Everything else wears the app's own ink. */
+.ctf {
+  --ctf-1: #2a78d6;
+  --ctf-2: #eb6834;
+  --ctf-grid: var(--border);
+  --ctf-limit: rgb(235 104 52 / 8%);
+
+  margin: 16px 0 0;
+}
+
+@media (prefers-color-scheme: dark) {
+  .ctf {
+    --ctf-1: #3987e5;
+    --ctf-2: #d95926;
+    --ctf-limit: rgb(217 89 38 / 12%);
+  }
+}
+
+.ctf figcaption {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 4px 16px;
+}
+
+.ctf h3 {
+  margin: 0;
+  font: 500 15px var(--sans);
+  color: var(--text-h);
+}
+
+.ctf-legend {
+  display: flex;
+  gap: 16px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  font-size: 14px;
+}
+
+.ctf-legend li {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.ctf-key {
+  width: 14px;
+  height: 2px;
+  border-radius: 1px;
+}
+
+.ctf-key.ctf-s1,
+.ctf circle.ctf-s1 {
+  background: var(--ctf-1);
+  fill: var(--ctf-1);
+}
+
+.ctf-key.ctf-s2,
+.ctf circle.ctf-s2 {
+  background: var(--ctf-2);
+  fill: var(--ctf-2);
+}
+
+.ctf svg {
+  display: block;
+  width: 100%;
+  margin: 4px 0;
+}
+
+.ctf-line {
+  fill: none;
+  stroke-width: 2;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+
+.ctf-line.ctf-s1 {
+  stroke: var(--ctf-1);
+}
+
+.ctf-line.ctf-s2 {
+  stroke: var(--ctf-2);
+}
+
+/* Chrome stays recessive: hairline, solid, one step off the surface. */
+.ctf-axis line {
+  stroke: var(--ctf-grid);
+  stroke-width: 1;
+}
+
+.ctf-axis text,
+.ctf-limit text {
+  font: 11px var(--mono);
+  fill: var(--text);
+  font-variant-numeric: tabular-nums;
+}
+
+.ctf-limit rect {
+  fill: var(--ctf-limit);
+}
+
+.ctf-rule line {
+  stroke: var(--text);
+  stroke-width: 1;
+  stroke-dasharray: 4 3;
+}
+
+.ctf-rule text {
+  font: 11px var(--mono);
+  fill: var(--text);
+}
+
+.ctf-cutoff line {
+  stroke: var(--accent);
+  stroke-width: 1.5;
+}
+
+.ctf-cutoff circle {
+  fill: var(--accent);
+  stroke: var(--bg);
+  stroke-width: 2;
+}
+
+.ctf-chosen circle {
+  fill: none;
+  stroke: var(--text-h);
+  stroke-width: 1.5;
+}
+
+.ctf-chosen text {
+  font: 500 11px var(--mono);
+  fill: var(--text-h);
+  paint-order: stroke;
+  stroke: var(--bg);
+  stroke-width: 3;
+}
+
+.ctf-hover line {
+  stroke: var(--text-h);
+  stroke-width: 1;
+  opacity: 0.4;
+}
+
+.ctf-hover circle {
+  stroke: var(--bg);
+  stroke-width: 2;
+}
+
+.ctf-read {
+  min-height: 1.4em;
+  font: 13px var(--mono);
+  color: var(--text);
+  font-variant-numeric: tabular-nums;
+}
+
+.ctf-read strong {
+  color: var(--text-h);
+}
+
+/* The rung the score landed on. */
+tr.chosen td {
+  color: var(--text-h);
+  font-weight: 600;
+}

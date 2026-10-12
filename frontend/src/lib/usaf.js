@@ -20,18 +20,42 @@ export function lineWidthUm(group, element) {
   return lineWidthMm(group, element) * 1000
 }
 
-/** Scan order of constants.py `initialize_score_table`: elements 2-4 of the first group, then five full groups. */
+/**
+ * Scan order of constants.py `initialize_score_table`: elements 2-4 of the
+ * first group, then five full groups. Each row carries its lp/mm and bar width
+ * as well, so a row is self-describing wherever it travels.
+ */
 export function scoreTable(firstGroup = FIRST_GROUP) {
   const rows = [2, 3, 4].map((element) => ({ group: firstGroup, element }))
   for (let offset = 1; offset <= 5; offset += 1) {
     for (const element of ELEMENTS) rows.push({ group: firstGroup + offset, element })
   }
-  return rows.map((row, index) => ({ index, ...row }))
+  return rows.map(({ group, element }, index) => ({
+    index,
+    group,
+    element,
+    lpPerMm: lpPerMm(group, element),
+    lineWidthUm: lineWidthUm(group, element),
+  }))
 }
 
-/** The exported scan order if the model carries one, else the mirrored table. */
-export function usafScoreTable(usaf) {
-  return usaf?.scoreTable?.length ? usaf.scoreTable : scoreTable(usaf?.firstGroup ?? FIRST_GROUP)
+/**
+ * Which group the scan table starts at, from how many nested patterns the model
+ * found: usaf_algo.py `G1 = 8 - pattern_count * 2`.
+ *
+ * A USAF target carries smaller copies of itself, each two groups finer than
+ * the one around it, so how many are in frame says how far in the outermost one
+ * already is. Without this a close-up of the inner pattern reads as group 2 when
+ * its bars are really group 6, and every lp/mm with it is off by a factor of 16.
+ */
+export function firstGroupFor(patternCount) {
+  if (!Number.isInteger(patternCount) || patternCount < 1) return null
+  return Math.min(7, 8 - patternCount * 2)
+}
+
+/** The scan order to read rows off, given the sidecar and what the model saw. */
+export function usafScoreTable(usaf, patternCount = null) {
+  return scoreTable(firstGroupFor(patternCount) ?? usaf?.firstGroup ?? FIRST_GROUP)
 }
 
 // "g3e4", "G3_E4", "group 3 element 4"; "g-1e3" is group -1.
