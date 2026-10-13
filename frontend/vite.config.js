@@ -5,6 +5,4 @@ import { defineConfig } from 'vite'
 export default defineConfig({
   plugins: [react()],
   server: { strictPort: true },
-  // Both ship wasm + workers that the dependency optimizer rewrites incorrectly.
-  optimizeDeps: { exclude: ['@ultralytics/yolo', 'onnxruntime-web'] },
 })

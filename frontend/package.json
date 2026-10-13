@@ -4,19 +4,12 @@
   "version": "0.0.0",
   "type": "module",
   "scripts": {
-    "postinstall": "node scripts/copy-ort.mjs",
-    "copy-ort": "node scripts/copy-ort.mjs",
-    "list-models": "node scripts/list-models.mjs",
-    "predev": "node scripts/check-static.mjs && node scripts/list-models.mjs",
     "dev": "vite",
-    "prebuild": "node scripts/check-static.mjs && node scripts/list-models.mjs",
     "build": "vite build",
-    "lint": "oxlint",
+    "lint": "oxlint src vite.config.js",
     "preview": "vite preview"
   },
   "dependencies": {
-    "@ultralytics/yolo": "^0.0.45",
-    "onnxruntime-web": "^1.30.0",
     "react": "^19.2.8",
     "react-dom": "^19.2.8"
   },

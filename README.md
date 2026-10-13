@@ -1,7 +1,7 @@
 # USAF Registration
 
-Focus scoring of USAF 1951 resolution targets, plus a web UI that runs the
-detection model in the browser. Scoring returns a `(group, element)` pair.
+Focus scoring of USAF 1951 resolution targets, plus a web UI for uploading
+images to the FastAPI analysis service. Scoring returns a `(group, element)` pair.
 
 ## Quick start
 
@@ -23,12 +23,9 @@ With GNU Make, Python 3, and Node installed, run from the repo root:
 make
 ```
 
-This creates `.venv`, installs the Python and frontend dependencies,
-exports the model to ONNX if the checkpoint is newer, and launches the
-frontend and FastAPI backend dev servers. Use `make backend` to run only the
-backend. `make help` lists the other targets. After
-retraining, `make export` (optionally `MODEL=usaf_registration/models/<name>.pt`)
-forces a re-export.
+This creates `.venv`, installs the Python and frontend dependencies, and
+launches the frontend and FastAPI backend dev servers. Use `make backend` to
+run only the backend. `make help` lists the other targets.
 
 ## Python scorer
 
@@ -56,8 +53,8 @@ pip install itk-elastix
 
 ## Web frontend
 
-The frontend runs the YOLO keypoint model in the browser with
-`@ultralytics/yolo`. To run just that frontend without the backend:
+The frontend uploads images to the FastAPI backend for analysis. To run just
+the frontend (with the backend started separately):
 
 ```bash
 cd frontend
@@ -65,21 +62,18 @@ npm install
 npm run dev
 ```
 
-`npm install` copies the onnxruntime-web runtime into `public/ort/` (gitignored).
-The exported model in `public/models/` is committed.
-
-After retraining, re-export from the repo root with the Python venv above
-activated. The first run may pip-install `onnx` and `onnxslim`.
+The standalone `usaf_registration/export_model.py` script is retained for
+manual ONNX exports. It is not part of the frontend build or startup flow.
+With the Python venv above activated, run:
 
 ```bash
 python usaf_registration/export_model.py
 ```
 
-That exports `4p_detect_ultra_pro_max.pt` to `frontend/public/models/`. To
-export a different checkpoint:
+To export a different checkpoint or destination:
 
 ```bash
-python usaf_registration/export_model.py --model usaf_registration/models/<name>.pt
+python usaf_registration/export_model.py --model usaf_registration/models/<name>.pt --out <output-directory>
 ```
 
 Other options: `--imgsz` (default 640), `--opset` (default 17), `--out`, and
