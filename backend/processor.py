@@ -26,6 +26,36 @@ OVERLAY_STYLES = {
 }
 
 
+def draw_overlay(image, elements: list[dict], best: dict, style: dict):
+    overlay = image.copy()
+    for item in elements:
+        g, e = int(item["group"]), int(item["element"])
+        selected = (g, e) == (int(best["group"]), int(best["element"]))
+        # OpenCV uses BGR. Dark outlines keep marks legible on bright bars.
+        line_width = style["line_width"] + int(selected)
+        label_width = style["label_width"] + int(selected)
+
+        for direction in ("vertical", "horizontal"):
+            line = item[direction]
+            a = tuple(map(int, line["pt_a"]))
+            b = tuple(map(int, line["pt_b"]))
+            cv2.line(overlay, a, b, (0, 0, 0), line_width + 3, cv2.LINE_AA)
+            cv2.line(overlay, a, b, style["line_color"], line_width, cv2.LINE_AA)
+
+        label_at = tuple(map(int, item["vertical"]["pt_a"]))
+        label = f"G{g}E{e}"
+        cv2.putText(
+            overlay, label, label_at,
+            cv2.FONT_HERSHEY_SIMPLEX, 0.5, (0, 0, 0), label_width + 2, cv2.LINE_AA,
+        )
+        cv2.putText(
+            overlay, label, label_at,
+            cv2.FONT_HERSHEY_SIMPLEX, 0.5, style["label_color"], label_width, cv2.LINE_AA,
+        )
+
+    return overlay
+
+
 def analyze(image_path: str, job_dir: str, overlay_style: str = "classic") -> dict:
     work = Path(job_dir)
     style = OVERLAY_STYLES[overlay_style]
@@ -50,33 +80,11 @@ def analyze(image_path: str, job_dir: str, overlay_style: str = "classic") -> di
     if image is None:
         raise ValueError("Could not decode image")
 
-    overlay = image.copy()
     elements = []
 
     for item in scanline_map.values():
         g, e = int(item["group"]), int(item["element"])
         selected = (g, e) == (group, element)
-        # OpenCV uses BGR. Dark outlines keep marks legible on bright bars.
-        line_width = style["line_width"] + int(selected)
-        label_width = style["label_width"] + int(selected)
-
-        for direction in ("vertical", "horizontal"):
-            line = item[direction]
-            a = tuple(map(int, line["pt_a"]))
-            b = tuple(map(int, line["pt_b"]))
-            cv2.line(overlay, a, b, (0, 0, 0), line_width + 3, cv2.LINE_AA)
-            cv2.line(overlay, a, b, style["line_color"], line_width, cv2.LINE_AA)
-
-        label_at = tuple(map(int, item["vertical"]["pt_a"]))
-        label = f"G{g}E{e}"
-        cv2.putText(
-            overlay, label, label_at,
-            cv2.FONT_HERSHEY_SIMPLEX, 0.5, (0, 0, 0), label_width + 2, cv2.LINE_AA,
-        )
-        cv2.putText(
-            overlay, label, label_at,
-            cv2.FONT_HERSHEY_SIMPLEX, 0.5, style["label_color"], label_width, cv2.LINE_AA,
-        )
 
         elements.append({
             "group": g,
@@ -88,14 +96,15 @@ def analyze(image_path: str, job_dir: str, overlay_style: str = "classic") -> di
             "selected": selected,
         })
 
-    cv2.imwrite(str(work / "overlay.png"), overlay)
+    best = {
+        "group": group,
+        "element": element,
+        "lp_per_mm": scorer.usaf_lp_per_mm(group, element),
+    }
+    cv2.imwrite(str(work / "overlay.png"), draw_overlay(image, elements, best, style))
 
     return {
-        "best": {
-            "group": group,
-            "element": element,
-            "lp_per_mm": scorer.usaf_lp_per_mm(group, element),
-        },
+        "best": best,
         "image": {"width": image.shape[1], "height": image.shape[0]},
         "elements": elements,
     }

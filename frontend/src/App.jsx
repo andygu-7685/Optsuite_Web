@@ -34,9 +34,6 @@ export default function App() {
         if (response.status === 'completed') {
           setAnalysisResult(response.result)
           setAnalysisStatus('Analysis complete')
-          const url = await getOverlayObjectUrl(analysisJob.id, analysisJob.token)
-          if (cancelled) URL.revokeObjectURL(url)
-          else replaceOverlayUrl(url)
         } else if (response.status === 'failed') {
           setAnalysisStatus(response.error || 'Analysis failed')
         } else {
@@ -55,6 +52,23 @@ export default function App() {
     }
   }, [analysisJob])
 
+  useEffect(() => {
+    if (!analysisJob || !analysisResult) return
+    let cancelled = false
+    getOverlayObjectUrl(analysisJob.id, analysisJob.token, overlayStyle)
+      .then((url) => {
+        if (cancelled) URL.revokeObjectURL(url)
+        else {
+          replaceOverlayUrl(url)
+          setAnalysisStatus('Analysis complete')
+        }
+      })
+      .catch((error) => {
+        if (!cancelled) setAnalysisStatus(`Overlay request failed: ${error.message}`)
+      })
+    return () => { cancelled = true }
+  }, [analysisJob, analysisResult, overlayStyle])
+
   function onFile(event) {
     const file = event.target.files?.[0]
     if (!file) return
@@ -72,6 +86,21 @@ export default function App() {
           setAnalysisStatus(`Upload failed: ${error.message}`)
         }
       })
+  }
+
+  function downloadResults() {
+    if (!analysisResult || !analysisJob) return
+    const blob = new Blob([JSON.stringify(analysisResult, null, 2)], {
+      type: 'application/json',
+    })
+    const url = URL.createObjectURL(blob)
+    const link = document.createElement('a')
+    link.href = url
+    link.download = `usaf-analysis-${analysisJob.id}-results.json`
+    document.body.appendChild(link)
+    link.click()
+    link.remove()
+    window.setTimeout(() => URL.revokeObjectURL(url), 1000)
   }
 
   return (
@@ -94,6 +123,18 @@ export default function App() {
             Group {analysisResult.best.group}, element {analysisResult.best.element} ·{' '}
             {Number(analysisResult.best.lp_per_mm).toFixed(2)} lp/mm
           </p>
+        )}
+        {analysisResult && (
+          <div className="download-actions">
+            {overlayUrl && (
+              <a href={overlayUrl} download={`usaf-analysis-${analysisJob.id}-overlay.png`}>
+                Download overlay (PNG)
+              </a>
+            )}
+            <button type="button" onClick={downloadResults}>
+              Download results (JSON)
+            </button>
+          </div>
         )}
         {overlayUrl && (
           <img

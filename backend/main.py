@@ -7,12 +7,13 @@ from concurrent.futures import ProcessPoolExecutor
 from contextlib import asynccontextmanager
 from pathlib import Path
 
+import cv2
 from fastapi import FastAPI, File, Form, Header, HTTPException, UploadFile
 from fastapi.middleware.cors import CORSMiddleware
-from fastapi.responses import FileResponse
+from fastapi.responses import FileResponse, Response
 from PIL import Image
 
-from backend.processor import OVERLAY_STYLES, analyze
+from backend.processor import OVERLAY_STYLES, analyze, draw_overlay
 
 DEFAULT_DATA_DIR = Path(__file__).resolve().parent / "runtime-data"
 DATA_DIR = Path(os.getenv("USAF_DATA_DIR", str(DEFAULT_DATA_DIR))).resolve()
@@ -104,6 +105,7 @@ def create_analysis(
             "token": token,
             "future": future,
             "dir": job_dir,
+            "image_path": image_path,
         }
         return {"id": job_id, "token": token, "status": "queued"}
 
@@ -147,8 +149,29 @@ def get_analysis(
 def get_overlay(
     job_id: str,
     x_job_token: str | None = Header(default=None),
+    overlay_style: str | None = None,
 ):
     job = get_job(job_id, x_job_token)
+    if overlay_style is not None:
+        if overlay_style not in OVERLAY_STYLES:
+            raise HTTPException(422, "Unknown overlay style")
+        style = OVERLAY_STYLES[overlay_style]
+
+        if not job["future"].done():
+            raise HTTPException(404, "Overlay not ready")
+        try:
+            result = job["future"].result()
+        except Exception as exc:
+            raise HTTPException(404, "Overlay not ready") from exc
+        image = cv2.imread(str(job["image_path"]))
+        if image is None:
+            raise HTTPException(404, "Original image not found")
+        overlay = draw_overlay(image, result["elements"], result["best"], style)
+        encoded, buffer = cv2.imencode(".png", overlay)
+        if not encoded:
+            raise HTTPException(500, "Could not encode overlay")
+        return Response(content=buffer.tobytes(), media_type="image/png")
+
     path = job["dir"] / "overlay.png"
     if not path.is_file():
         raise HTTPException(404, "Overlay not ready")

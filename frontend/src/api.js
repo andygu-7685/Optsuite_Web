@@ -21,8 +21,9 @@ export async function getAnalysis(id, token) {
   return response.json();
 }
 
-export async function getOverlayObjectUrl(id, token) {
-  const response = await fetch(`${API}/api/analyses/${id}/overlay`, {
+export async function getOverlayObjectUrl(id, token, style) {
+  const params = new URLSearchParams({ overlay_style: style });
+  const response = await fetch(`${API}/api/analyses/${id}/overlay?${params}`, {
     headers: { "X-Job-Token": token },
   });
   if (!response.ok) throw new Error(await response.text());
