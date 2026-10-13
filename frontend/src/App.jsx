@@ -121,7 +121,8 @@ export default function App() {
         {analysisResult?.best && (
           <p>
             Group {analysisResult.best.group}, element {analysisResult.best.element} ·{' '}
-            {Number(analysisResult.best.lp_per_mm).toFixed(2)} lp/mm
+            {Number(analysisResult.best.lp_per_mm).toFixed(2)} lp/mm ·{' '}
+            Resolution {Number(analysisResult.best.resolution_mm).toPrecision(3)} mm
           </p>
         )}
         {analysisResult && (
@@ -144,8 +145,8 @@ export default function App() {
           />
         )}
         {analysisResult?.elements?.length > 0 && (
-          <pre>{JSON.stringify(analysisResult.elements.map(({ group, element, lp_per_mm, contrast_score, selected }) => ({
-            group, element, lp_per_mm, contrast_score, selected,
+          <pre>{JSON.stringify(analysisResult.elements.map(({ group, element, lp_per_mm, resolution_mm, contrast_score, selected }) => ({
+            group, element, lp_per_mm, resolution_mm, contrast_score, selected,
           })), null, 2)}</pre>
         )}
       </section>

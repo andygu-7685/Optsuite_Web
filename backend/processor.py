@@ -90,6 +90,7 @@ def analyze(image_path: str, job_dir: str, overlay_style: str = "classic") -> di
             "group": g,
             "element": e,
             "lp_per_mm": float(item["lp_per_mm"]),
+            "resolution_mm": float(item["resolution_mm"]),
             "contrast_score": float(item["score"]),
             "vertical": item["vertical"],
             "horizontal": item["horizontal"],
@@ -100,6 +101,7 @@ def analyze(image_path: str, job_dir: str, overlay_style: str = "classic") -> di
         "group": group,
         "element": element,
         "lp_per_mm": scorer.usaf_lp_per_mm(group, element),
+        "resolution_mm": scorer.usaf_resolution_mm(group, element),
     }
     cv2.imwrite(str(work / "overlay.png"), draw_overlay(image, elements, best, style))
 
