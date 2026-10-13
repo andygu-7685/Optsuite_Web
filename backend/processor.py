@@ -20,7 +20,7 @@ def analyze(image_path: str, job_dir: str) -> dict:
 
     raw = scorer.score_image_routine(image_path)
     if not raw or raw[0] is None:
-        return ValueError("No USAF group and element could be scored")
+        raise ValueError("No USAF group and element could be scored")
 
     group, element = map(int, raw[0])
     scanline_map = raw[2] or {}

@@ -5,6 +5,18 @@ detection model in the browser. Scoring returns a `(group, element)` pair.
 
 ## Quick start
 
+Windows (PowerShell), without GNU Make:
+
+```powershell
+.\dev.cmd
+```
+
+Use `.\dev.cmd backend` to start only the FastAPI backend. The launcher
+installs Python dependencies, installs frontend dependencies if needed, then
+opens a separate backend window and runs Vite in the current terminal.
+Analysis uploads, overlays, and logs are saved under `backend/runtime-data/`
+by default. Set `USAF_DATA_DIR` to use another location.
+
 With GNU Make, Python 3, and Node installed, run from the repo root:
 
 ```bash
@@ -13,7 +25,8 @@ make
 
 This creates `.venv`, installs the Python and frontend dependencies,
 exports the model to ONNX if the checkpoint is newer, and launches the
-frontend dev server. `make help` lists the other targets. After
+frontend and FastAPI backend dev servers. Use `make backend` to run only the
+backend. `make help` lists the other targets. After
 retraining, `make export` (optionally `MODEL=usaf_registration/models/<name>.pt`)
 forces a re-export.
 
@@ -43,8 +56,8 @@ pip install itk-elastix
 
 ## Web frontend
 
-Runs the YOLO keypoint model in the browser with `@ultralytics/yolo`. No Python
-needed:
+The frontend runs the YOLO keypoint model in the browser with
+`@ultralytics/yolo`. To run just that frontend without the backend:
 
 ```bash
 cd frontend

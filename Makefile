@@ -1,7 +1,8 @@
 # Sets up the Python venv + frontend deps, exports the YOLO model to ONNX,
-# and launches the frontend dev server.
+# and launches the frontend and backend dev servers.
 #
-#   make                 env + export (if the .pt is newer) + dev server
+#   make                 env + export (if the .pt is newer) + both dev servers
+#   make backend         backend dev server only
 #   make export MODEL=usaf_registration/models/best_4p_1.pt
 #   make help
 
@@ -28,16 +29,16 @@ PY_STAMP := .venv/.installed
 NPM_STAMP := $(WEB)/node_modules/.package-lock.json
 
 .DEFAULT_GOAL := all
-.PHONY: all env export model dev build help clean
+.PHONY: all env export model backend frontend-dev dev build help clean
 
 all: env model dev
 
 env: $(PY_STAMP) $(NPM_STAMP)
 
-$(PY_STAMP): requirements.txt
+$(PY_STAMP): requirements.txt backend/requirements.txt
 	$(PYTHON) -m venv .venv
 	$(VENV_PY) -m pip install --upgrade pip
-	$(VENV_PY) -m pip install -r requirements.txt
+	$(VENV_PY) -m pip install -r requirements.txt -r backend/requirements.txt
 	$(VENV_PY) -c "import pathlib; pathlib.Path('$(PY_STAMP)').touch()"
 
 # npm writes node_modules/.package-lock.json on every install; postinstall
@@ -55,8 +56,14 @@ $(ONNX): $(MODEL) | $(PY_STAMP)
 export: | $(PY_STAMP)
 	$(VENV_PY) usaf_registration/export_model.py --model $(MODEL) $(EXPORT_ARGS)
 
-dev: $(NPM_STAMP)
+backend: $(PY_STAMP)
+	$(VENV_PY) -m uvicorn backend.main:app --host 127.0.0.1 --port 8000 --workers 1
+
+frontend-dev: $(NPM_STAMP)
 	cd $(WEB) && npm run dev
+
+dev: $(PY_STAMP) $(NPM_STAMP)
+	$(MAKE) -j2 backend frontend-dev
 
 build: $(NPM_STAMP)
 	cd $(WEB) && npm run build
@@ -67,11 +74,13 @@ clean:
 	$(call RMDIR,$(WEB)/public/ort)
 
 help:
-	@echo make          - set up env, export model if stale, launch frontend
+	@echo make          - set up env, export model if stale, launch frontend and backend
 	@echo make env      - create .venv, pip install, npm install frontend
 	@echo make model    - export MODEL to ONNX only if the .pt is newer
 	@echo make export   - always re-export MODEL (default $(MODEL))
-	@echo make dev      - launch the frontend dev server
+	@echo make backend  - launch the FastAPI backend only
+	@echo make frontend-dev - launch the frontend only
+	@echo make dev      - launch the frontend and backend dev servers
 	@echo make build    - production build of frontend
 	@echo make clean    - remove .venv, node_modules, public/ort
 	@echo Vars: PYTHON=$(PYTHON) MODEL=path/to.pt EXPORT_ARGS="--imgsz 960"

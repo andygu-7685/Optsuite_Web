@@ -9,3 +9,9 @@ __pycache__/
 *.pyc
 .venv/
 venv/
+
+# Generated analysis output and logs
+/runtime-data/
+/backend/runtime-data/
+logs/
+*.log
