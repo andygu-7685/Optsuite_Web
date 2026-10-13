@@ -9,6 +9,7 @@ export default function App() {
   const [analysisResult, setAnalysisResult] = useState(null)
   const [analysisStatus, setAnalysisStatus] = useState('Select an image to run USAF analysis.')
   const [overlayUrl, setOverlayUrl] = useState(null)
+  const [overlayStyle, setOverlayStyle] = useState('classic')
 
   function replaceOverlayUrl(url) {
     if (overlayObjectUrlRef.current) URL.revokeObjectURL(overlayObjectUrlRef.current)
@@ -62,7 +63,7 @@ export default function App() {
     setAnalysisResult(null)
     replaceOverlayUrl(null)
     setAnalysisStatus('Uploading image…')
-    uploadAnalysis(file)
+    uploadAnalysis(file, overlayStyle)
       .then((job) => {
         if (requestId === uploadRequestRef.current) setAnalysisJob(job)
       })
@@ -75,6 +76,15 @@ export default function App() {
 
   return (
     <main>
+      <label className="overlay-style-select">
+        Overlay style
+        <select value={overlayStyle} onChange={(event) => setOverlayStyle(event.target.value)}>
+          <option value="classic">Yellow scanlines (2 px), yellow labels (2 px)</option>
+          <option value="cyan_white">Cyan scanlines (3 px), white labels (2 px)</option>
+          <option value="magenta_yellow">Magenta scanlines (4 px), yellow labels (3 px)</option>
+          <option value="green_white">Green scanlines (2 px), white labels (2 px)</option>
+        </select>
+      </label>
       <input type="file" accept="image/*" onChange={onFile} />
       <section style={{ width: '100%', maxWidth: 1100 }}>
         <h2>Server USAF analysis</h2>
@@ -87,9 +97,9 @@ export default function App() {
         )}
         {overlayUrl && (
           <img
+            className="analysis-image"
             src={overlayUrl}
             alt="USAF group and element scanline overlay"
-            style={{ maxWidth: '100%', height: 'auto' }}
           />
         )}
         {analysisResult?.elements?.length > 0 && (

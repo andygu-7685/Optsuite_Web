@@ -6,8 +6,29 @@ os.environ.setdefault("MPLBACKEND", "Agg")
 import cv2
 from usaf_registration import UsafRegistration
 
-def analyze(image_path: str, job_dir: str) -> dict:
+OVERLAY_STYLES = {
+    "classic": {
+        "line_color": (0, 230, 255), "line_width": 2,
+        "label_color": (0, 230, 255), "label_width": 2,
+    },
+    "cyan_white": {
+        "line_color": (255, 255, 0), "line_width": 3,
+        "label_color": (255, 255, 255), "label_width": 2,
+    },
+    "magenta_yellow": {
+        "line_color": (255, 0, 255), "line_width": 4,
+        "label_color": (0, 230, 255), "label_width": 3,
+    },
+    "green_white": {
+        "line_color": (80, 255, 80), "line_width": 2,
+        "label_color": (255, 255, 255), "label_width": 2,
+    },
+}
+
+
+def analyze(image_path: str, job_dir: str, overlay_style: str = "classic") -> dict:
     work = Path(job_dir)
+    style = OVERLAY_STYLES[overlay_style]
     scorer = UsafRegistration()
 
     # The existing algorithm writes crops and logs. Isolate each job.
@@ -35,18 +56,26 @@ def analyze(image_path: str, job_dir: str) -> dict:
     for item in scanline_map.values():
         g, e = int(item["group"]), int(item["element"])
         selected = (g, e) == (group, element)
-        color = (60, 220, 60) if selected else (0, 200, 255)
+        # OpenCV uses BGR. Dark outlines keep marks legible on bright bars.
+        line_width = style["line_width"] + int(selected)
+        label_width = style["label_width"] + int(selected)
 
         for direction in ("vertical", "horizontal"):
             line = item[direction]
             a = tuple(map(int, line["pt_a"]))
             b = tuple(map(int, line["pt_b"]))
-            cv2.line(overlay, a, b, color, 2 if selected else 1)
+            cv2.line(overlay, a, b, (0, 0, 0), line_width + 3, cv2.LINE_AA)
+            cv2.line(overlay, a, b, style["line_color"], line_width, cv2.LINE_AA)
 
         label_at = tuple(map(int, item["vertical"]["pt_a"]))
+        label = f"G{g}E{e}"
         cv2.putText(
-            overlay, f"G{g}E{e}", label_at,
-            cv2.FONT_HERSHEY_SIMPLEX, 0.4, color, 1,
+            overlay, label, label_at,
+            cv2.FONT_HERSHEY_SIMPLEX, 0.5, (0, 0, 0), label_width + 2, cv2.LINE_AA,
+        )
+        cv2.putText(
+            overlay, label, label_at,
+            cv2.FONT_HERSHEY_SIMPLEX, 0.5, style["label_color"], label_width, cv2.LINE_AA,
         )
 
         elements.append({

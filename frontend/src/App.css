@@ -26,6 +26,33 @@ input[type='file']::file-selector-button {
   cursor: pointer;
 }
 
+.overlay-style-select {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  width: min(100%, 440px);
+  color: var(--text-h);
+  font-size: 15px;
+  text-align: left;
+}
+
+.overlay-style-select select {
+  width: 100%;
+  padding: 8px 10px;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  background: var(--bg);
+  color: var(--text-h);
+  font: inherit;
+}
+
+.analysis-image {
+  display: block;
+  max-width: 100%;
+  height: auto;
+  margin: 20px auto;
+}
+
 pre {
   width: 100%;
   margin: 0;

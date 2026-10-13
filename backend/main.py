@@ -7,12 +7,12 @@ from concurrent.futures import ProcessPoolExecutor
 from contextlib import asynccontextmanager
 from pathlib import Path
 
-from fastapi import FastAPI, File, Header, HTTPException, UploadFile
+from fastapi import FastAPI, File, Form, Header, HTTPException, UploadFile
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import FileResponse
 from PIL import Image
 
-from backend.processor import analyze
+from backend.processor import OVERLAY_STYLES, analyze
 
 DEFAULT_DATA_DIR = Path(__file__).resolve().parent / "runtime-data"
 DATA_DIR = Path(os.getenv("USAF_DATA_DIR", str(DEFAULT_DATA_DIR))).resolve()
@@ -57,7 +57,12 @@ def get_job(job_id: str, token: str | None):
 
 
 @app.post("/api/analyses", status_code=202)
-def create_analysis(file: UploadFile = File(...)):
+def create_analysis(
+    file: UploadFile = File(...),
+    overlay_style: str = Form("classic"),
+):
+    if overlay_style not in OVERLAY_STYLES:
+        raise HTTPException(422, "Unknown overlay style")
     pending = sum(not job["future"].done() for job in jobs.values())
     if pending >= MAX_PENDING:
         raise HTTPException(429, "Analysis queue is full")
@@ -93,7 +98,7 @@ def create_analysis(file: UploadFile = File(...)):
             raise HTTPException(400, "Invalid image") from exc
 
         future = app.state.pool.submit(
-            analyze, str(image_path), str(job_dir)
+            analyze, str(image_path), str(job_dir), overlay_style
         )
         jobs[job_id] = {
             "token": token,
