@@ -2,6 +2,8 @@
 
 Focus scoring of USAF 1951 resolution targets, plus a web UI for uploading
 images to the FastAPI analysis service. Scoring returns a `(group, element)` pair.
+The Python scorer, models, and reference images live in `backend/usaf_registration/`;
+the web app lives in `frontend/`.
 
 ## Quick start
 
@@ -45,7 +47,7 @@ pip install -r requirements.txt
 ```
 
 `itk-elastix` is an extra dependency, needed only when `PT_TRANSFORM = "elastix"`
-in [usaf_registration/constants.py](usaf_registration/constants.py):
+in [backend/usaf_registration/constants.py](backend/usaf_registration/constants.py):
 
 ```bash
 pip install itk-elastix
@@ -62,18 +64,18 @@ npm install
 npm run dev
 ```
 
-The standalone `usaf_registration/export_model.py` script is retained for
+The standalone `backend/usaf_registration/export_model.py` script is retained for
 manual ONNX exports. It is not part of the frontend build or startup flow.
 With the Python venv above activated, run:
 
 ```bash
-python usaf_registration/export_model.py
+python backend/usaf_registration/export_model.py
 ```
 
 To export a different checkpoint or destination:
 
 ```bash
-python usaf_registration/export_model.py --model usaf_registration/models/<name>.pt --out <output-directory>
+python backend/usaf_registration/export_model.py --model backend/usaf_registration/models/<name>.pt --out <output-directory>
 ```
 
 Other options: `--imgsz` (default 640), `--opset` (default 17), `--out`, and

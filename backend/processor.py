@@ -4,7 +4,7 @@ from pathlib import Path
 os.environ.setdefault("MPLBACKEND", "Agg")
 
 import cv2
-from usaf_registration import UsafRegistration
+from backend.usaf_registration import UsafRegistration
 
 OVERLAY_STYLES = {
     "classic": {
