@@ -46,6 +46,33 @@ input[type='file']::file-selector-button {
   font: inherit;
 }
 
+.image-preview {
+  max-width: 240px;
+  max-height: 180px;
+  object-fit: contain;
+  border-radius: 8px;
+}
+
+.submit-image {
+  padding: 8px 16px;
+  border: 1px solid var(--accent-border);
+  border-radius: 8px;
+  background: var(--accent-bg);
+  color: var(--accent);
+  font: inherit;
+  font-size: 15px;
+  cursor: pointer;
+}
+
+.submit-image:hover:not(:disabled) {
+  background: var(--accent-border);
+}
+
+.submit-image:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
 .analysis-image {
   display: block;
   max-width: 100%;
@@ -77,6 +104,23 @@ input[type='file']::file-selector-button {
 .download-actions a:hover,
 .download-actions button:hover {
   background: var(--accent-border);
+}
+
+.json-results {
+  width: 100%;
+  margin-top: 16px;
+}
+
+.json-results summary {
+  cursor: pointer;
+  color: var(--text-h);
+  text-align: left;
+}
+
+.json-results pre {
+  max-height: 480px;
+  margin-top: 10px;
+  overflow: auto;
 }
 
 pre {

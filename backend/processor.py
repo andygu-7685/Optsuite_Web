@@ -106,6 +106,11 @@ def analyze(image_path: str, job_dir: str, overlay_style: str = "classic") -> di
     cv2.imwrite(str(work / "overlay.png"), draw_overlay(image, elements, best, style))
 
     return {
+        "results": {
+            "highest_selected_element": {"group": group, "element": element},
+            "resolution_mm": best["resolution_mm"],
+            "lp_per_mm": best["lp_per_mm"],
+        },
         "best": best,
         "image": {"width": image.shape[1], "height": image.shape[0]},
         "elements": elements,

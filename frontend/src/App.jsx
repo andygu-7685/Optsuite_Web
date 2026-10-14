@@ -5,6 +5,10 @@ import './App.css'
 export default function App() {
   const uploadRequestRef = useRef(0)
   const overlayObjectUrlRef = useRef(null)
+  const previewObjectUrlRef = useRef(null)
+  const [selectedFile, setSelectedFile] = useState(null)
+  const [previewUrl, setPreviewUrl] = useState(null)
+  const [isSubmitting, setIsSubmitting] = useState(false)
   const [analysisJob, setAnalysisJob] = useState(null)
   const [analysisResult, setAnalysisResult] = useState(null)
   const [analysisStatus, setAnalysisStatus] = useState('Select an image to run USAF analysis.')
@@ -17,8 +21,15 @@ export default function App() {
     setOverlayUrl(url)
   }
 
+  function replacePreviewUrl(url) {
+    if (previewObjectUrlRef.current) URL.revokeObjectURL(previewObjectUrlRef.current)
+    previewObjectUrlRef.current = url
+    setPreviewUrl(url)
+  }
+
   useEffect(() => () => {
     if (overlayObjectUrlRef.current) URL.revokeObjectURL(overlayObjectUrlRef.current)
+    if (previewObjectUrlRef.current) URL.revokeObjectURL(previewObjectUrlRef.current)
   }, [])
 
   useEffect(() => {
@@ -72,12 +83,25 @@ export default function App() {
   function onFile(event) {
     const file = event.target.files?.[0]
     if (!file) return
+    ++uploadRequestRef.current
+    setSelectedFile(file)
+    replacePreviewUrl(URL.createObjectURL(file))
+    setIsSubmitting(false)
+    setAnalysisJob(null)
+    setAnalysisResult(null)
+    replaceOverlayUrl(null)
+    setAnalysisStatus('Image ready. Click Submit image to analyze.')
+  }
+
+  function submitImage() {
+    if (!selectedFile || isSubmitting) return
     const requestId = ++uploadRequestRef.current
+    setIsSubmitting(true)
     setAnalysisJob(null)
     setAnalysisResult(null)
     replaceOverlayUrl(null)
     setAnalysisStatus('Uploading image…')
-    uploadAnalysis(file, overlayStyle)
+    uploadAnalysis(selectedFile, overlayStyle)
       .then((job) => {
         if (requestId === uploadRequestRef.current) setAnalysisJob(job)
       })
@@ -85,6 +109,9 @@ export default function App() {
         if (requestId === uploadRequestRef.current) {
           setAnalysisStatus(`Upload failed: ${error.message}`)
         }
+      })
+      .finally(() => {
+        if (requestId === uploadRequestRef.current) setIsSubmitting(false)
       })
   }
 
@@ -115,6 +142,17 @@ export default function App() {
         </select>
       </label>
       <input type="file" accept="image/*" onChange={onFile} />
+      {previewUrl && (
+        <img className="image-preview" src={previewUrl} alt="Selected image preview" />
+      )}
+      <button
+        className="submit-image"
+        type="button"
+        onClick={submitImage}
+        disabled={!selectedFile || isSubmitting}
+      >
+        {isSubmitting ? 'Submitting…' : 'Submit image'}
+      </button>
       <section style={{ width: '100%', maxWidth: 1100 }}>
         <h2>Server USAF analysis</h2>
         <p>{analysisStatus}</p>
@@ -144,10 +182,11 @@ export default function App() {
             alt="USAF group and element scanline overlay"
           />
         )}
-        {analysisResult?.elements?.length > 0 && (
-          <pre>{JSON.stringify(analysisResult.elements.map(({ group, element, lp_per_mm, resolution_mm, contrast_score, selected }) => ({
-            group, element, lp_per_mm, resolution_mm, contrast_score, selected,
-          })), null, 2)}</pre>
+        {analysisResult && (
+          <details className="json-results" key={analysisJob.id}>
+            <summary>Results JSON</summary>
+            <pre>{JSON.stringify(analysisResult, null, 2)}</pre>
+          </details>
         )}
       </section>
     </main>
