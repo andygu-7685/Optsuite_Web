@@ -1,0 +1,137 @@
+/* Tokens (--text-h, --border, --accent, --code-bg, ...) come from index.css. */
+
+main {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 16px;
+  padding: 32px 24px;
+}
+
+input[type='file'] {
+  font: inherit;
+  font-size: 15px;
+  color: var(--text);
+}
+
+input[type='file']::file-selector-button {
+  margin-right: 12px;
+  padding: 8px 16px;
+  border: 1px solid var(--accent-border);
+  border-radius: 8px;
+  background: var(--accent-bg);
+  color: var(--accent);
+  font: inherit;
+  font-size: 15px;
+  cursor: pointer;
+}
+
+.overlay-style-select {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  width: min(100%, 440px);
+  color: var(--text-h);
+  font-size: 15px;
+  text-align: left;
+}
+
+.overlay-style-select select {
+  width: 100%;
+  padding: 8px 10px;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  background: var(--bg);
+  color: var(--text-h);
+  font: inherit;
+}
+
+.image-preview {
+  max-width: 240px;
+  max-height: 180px;
+  object-fit: contain;
+  border-radius: 8px;
+}
+
+.submit-image {
+  padding: 8px 16px;
+  border: 1px solid var(--accent-border);
+  border-radius: 8px;
+  background: var(--accent-bg);
+  color: var(--accent);
+  font: inherit;
+  font-size: 15px;
+  cursor: pointer;
+}
+
+.submit-image:hover:not(:disabled) {
+  background: var(--accent-border);
+}
+
+.submit-image:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.analysis-image {
+  display: block;
+  max-width: 100%;
+  height: auto;
+  margin: 20px auto;
+}
+
+.download-actions {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 10px;
+  margin-top: 16px;
+}
+
+.download-actions a,
+.download-actions button {
+  padding: 8px 16px;
+  border: 1px solid var(--accent-border);
+  border-radius: 8px;
+  background: var(--accent-bg);
+  color: var(--accent);
+  font: inherit;
+  font-size: 15px;
+  text-decoration: none;
+  cursor: pointer;
+}
+
+.download-actions a:hover,
+.download-actions button:hover {
+  background: var(--accent-border);
+}
+
+.json-results {
+  width: 100%;
+  margin-top: 16px;
+}
+
+.json-results summary {
+  cursor: pointer;
+  color: var(--text-h);
+  text-align: left;
+}
+
+.json-results pre {
+  max-height: 480px;
+  margin-top: 10px;
+  overflow: auto;
+}
+
+pre {
+  width: 100%;
+  margin: 0;
+  padding: 16px;
+  box-sizing: border-box;
+  border-radius: 8px;
+  background: var(--code-bg);
+  color: var(--text-h);
+  font: 14px/140% var(--mono);
+  text-align: left;
+  overflow-x: auto;
+}
