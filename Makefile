@@ -9,16 +9,17 @@ ifeq ($(OS),Windows_NT)
 SHELL := cmd.exe
 .SHELLFLAGS := /c
 PYTHON ?= py
-VENV_PY := .venv\Scripts\python.exe
+VENV_PY := backend\.venv\Scripts\python.exe
 RMDIR = if exist $(subst /,\,$(1)) rmdir /s /q $(subst /,\,$(1))
 else
 PYTHON ?= python3
-VENV_PY := .venv/bin/python
+VENV_PY := backend/.venv/bin/python
 RMDIR = rm -rf $(1)
 endif
 
 WEB := frontend
-PY_STAMP := .venv/.installed
+VENV_DIR := backend/.venv
+PY_STAMP := $(VENV_DIR)/.installed
 NPM_STAMP := $(WEB)/node_modules/.package-lock.json
 
 .DEFAULT_GOAL := all
@@ -28,10 +29,10 @@ all: env dev
 
 env: $(PY_STAMP) $(NPM_STAMP)
 
-$(PY_STAMP): requirements.txt backend/requirements.txt
-	$(PYTHON) -m venv .venv
+$(PY_STAMP): backend/requirements.txt
+	$(PYTHON) -m venv $(VENV_DIR)
 	$(VENV_PY) -m pip install --upgrade pip
-	$(VENV_PY) -m pip install -r requirements.txt -r backend/requirements.txt
+	$(VENV_PY) -m pip install -r backend/requirements.txt
 	$(VENV_PY) -c "import pathlib; pathlib.Path('$(PY_STAMP)').touch()"
 
 # npm writes node_modules/.package-lock.json on every install.
@@ -51,15 +52,15 @@ build: $(NPM_STAMP)
 	cd $(WEB) && npm run build
 
 clean:
-	$(call RMDIR,.venv)
+	$(call RMDIR,$(VENV_DIR))
 	$(call RMDIR,$(WEB)/node_modules)
 
 help:
 	@echo make          - set up env, launch frontend and backend
-	@echo make env      - create .venv, pip install, npm install frontend
+	@echo make env      - create backend/.venv, pip install, npm install frontend
 	@echo make backend  - launch the FastAPI backend only
 	@echo make frontend-dev - launch the frontend only
 	@echo make dev      - launch the frontend and backend dev servers
 	@echo make build    - production build of frontend
-	@echo make clean    - remove .venv and node_modules
+	@echo make clean    - remove backend/.venv and node_modules
 	@echo Vars: PYTHON=$(PYTHON)

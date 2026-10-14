@@ -25,7 +25,7 @@ With GNU Make, Python 3, and Node installed, run from the repo root:
 make
 ```
 
-This creates `.venv`, installs the Python and frontend dependencies, and
+This creates `backend/.venv`, installs the Python and frontend dependencies, and
 launches the frontend and FastAPI backend dev servers. Use `make backend` to
 run only the backend. `make help` lists the other targets.
 
@@ -34,16 +34,16 @@ run only the backend. `make help` lists the other targets.
 macOS / Linux:
 
 ```bash
-python3 -m venv .venv && source .venv/bin/activate
-pip install -r requirements.txt
+python3 -m venv backend/.venv && source backend/.venv/bin/activate
+pip install -r backend/requirements.txt
 ```
 
 Windows (PowerShell):
 
 ```powershell
-py -m venv .venv
-.venv\Scripts\Activate.ps1
-pip install -r requirements.txt
+py -m venv backend/.venv
+backend\.venv\Scripts\Activate.ps1
+pip install -r backend/requirements.txt
 ```
 
 `itk-elastix` is an extra dependency, needed only when `PT_TRANSFORM = "elastix"`
