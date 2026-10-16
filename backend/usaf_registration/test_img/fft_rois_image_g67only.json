@@ -1,0 +1,18 @@
+{
+  "rois": [
+    {
+      "group": 7,
+      "element": 1,
+      "bars": "vertical",
+      "box": [542, 120, 56, 56],
+      "period_px": 20.75
+    },
+    {
+      "group": 7,
+      "element": 1,
+      "bars": "horizontal",
+      "box": [614, 118, 56, 56],
+      "period_px": 20.75
+    }
+  ]
+}
