@@ -9,6 +9,7 @@ class UsafConfig:
         self.DEBUG_MODE = False              # debug log + photo
         self.PREVIEW_MODE = False            # overview photo
         self.FLIPED_TARGET = True            # true if target is fliped
+        self.FLIP_OVERRIDE = None            # None detects orientation; bool fixes it for this analysis
         self.G1 = 2                          # first group number
         self.SCORE_THRESHOLD = 0.2          # threshold to determine if a scanline is valid, between 0 and 1 of the normalized score
         self.SCORE_METHOD = "min"

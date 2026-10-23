@@ -215,7 +215,7 @@ def yolo_4pt_calculation(self, pt4_pattern_result, img):
             total_conf = sum(kp["conf"] for kp in ordered_kps if kp["conf"] is not None)
             directions.append([bool(is_clockwise), total_conf])
 
-            if not self.C.retry_flag:
+            if not self.C.retry_flag and self.C.FLIP_OVERRIDE is None:
                 # Canonical ordered square points for kp0..kp3.
                 self.C.FLIPED_TARGET = yolo_dir
                 fliped = -1 if self.C.FLIPED_TARGET else 1
@@ -291,7 +291,7 @@ def yolo_4pt_calculation(self, pt4_pattern_result, img):
         # take the highest confidence direction
         yolo_dir = max(directions, key=lambda x: x[1])[0]
 
-    if yolo_dir is not None and not self.C.retry_flag:
+    if yolo_dir is not None and not self.C.retry_flag and self.C.FLIP_OVERRIDE is None:
         self.C.FLIPED_TARGET = yolo_dir
 
     if self.C.DEBUG_MODE and img is not None:

@@ -30,6 +30,7 @@ export default function App() {
   const [imageDimensions, setImageDimensions] = useState('')
   const [overlayUrl, setOverlayUrl] = useState(null)
   const [overlayStyle, setOverlayStyle] = useState('classic')
+  const [flipSetting, setFlipSetting] = useState('auto')
   const [analysisJob, setAnalysisJob] = useState(null)
   const [analysisResult, setAnalysisResult] = useState(null)
   const [phase, setPhase] = useState('idle')
@@ -164,7 +165,7 @@ export default function App() {
     setOverlayLoading(false)
     replaceOverlayUrl(null)
     setView('original')
-    uploadAnalysis(selectedFile, overlayStyle)
+    uploadAnalysis(selectedFile, overlayStyle, flipSetting === 'auto' ? null : flipSetting === 'yes')
       .then((job) => {
         if (requestId === uploadRequestRef.current) {
           setAnalysisJob(job)
@@ -177,6 +178,19 @@ export default function App() {
           setErrorMessage(`Upload failed: ${error.message}`)
         }
       })
+  }
+
+  function changeFlipSetting(value) {
+    if (value === flipSetting) return
+    ++uploadRequestRef.current
+    setFlipSetting(value)
+    setAnalysisJob(null)
+    setAnalysisResult(null)
+    replaceOverlayUrl(null)
+    setOverlayLoading(false)
+    setView('original')
+    setPhase(selectedFile ? 'ready' : 'idle')
+    setErrorMessage('')
   }
 
   useEffect(() => {
@@ -217,7 +231,7 @@ export default function App() {
   }
 
   const currentStep = !selectedFile ? 0 : done ? 3 : busy ? 2 : 1
-  const steps = ['Open an image', 'Choose overlay style', 'Analyze and export']
+  const steps = ['Open an image', 'Set image options', 'Analyze and export']
   const best = analysisResult?.best
   const resultRows = best ? [
     ['Group', best.group],
@@ -272,6 +286,16 @@ export default function App() {
                 <dt>Pixels</dt><dd>{imageDimensions || '—'}</dd>
               </dl>
             ) : <p className="muted">No image loaded</p>}
+          </section>
+          <section className="panel-section flip-section">
+            <h2>Image flipped?</h2>
+            <div className="flip-options" role="radiogroup" aria-label="Image flipped">
+              {[['auto', 'Auto'], ['yes', 'Yes'], ['no', 'No']].map(([value, label]) => (
+                <button key={value} type="button" role="radio" aria-checked={flipSetting === value} className={flipSetting === value ? 'selected' : ''} onClick={() => changeFlipSetting(value)} disabled={busy}>
+                  {label}
+                </button>
+              ))}
+            </div>
           </section>
           <section className="panel-section style-section">
             <h2>Overlay style</h2>

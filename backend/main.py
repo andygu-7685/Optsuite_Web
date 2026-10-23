@@ -61,6 +61,7 @@ def get_job(job_id: str, token: str | None):
 def create_analysis(
     file: UploadFile = File(...),
     overlay_style: str = Form("classic"),
+    flipped: bool | None = Form(None),
 ):
     if overlay_style not in OVERLAY_STYLES:
         raise HTTPException(422, "Unknown overlay style")
@@ -99,7 +100,7 @@ def create_analysis(
             raise HTTPException(400, "Invalid image") from exc
 
         future = app.state.pool.submit(
-            analyze, str(image_path), str(job_dir), overlay_style
+            analyze, str(image_path), str(job_dir), overlay_style, flipped
         )
         jobs[job_id] = {
             "token": token,

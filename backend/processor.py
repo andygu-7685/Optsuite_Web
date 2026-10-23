@@ -56,10 +56,13 @@ def draw_overlay(image, elements: list[dict], best: dict, style: dict):
     return overlay
 
 
-def analyze(image_path: str, job_dir: str, overlay_style: str = "classic") -> dict:
+def analyze(image_path: str, job_dir: str, overlay_style: str = "classic", flipped: bool | None = None) -> dict:
     work = Path(job_dir)
     style = OVERLAY_STYLES[overlay_style]
     scorer = UsafRegistration()
+    scorer.C.FLIP_OVERRIDE = flipped
+    if flipped is not None:
+        scorer.C.FLIPED_TARGET = flipped
 
     # The existing algorithm writes crops and logs. Isolate each job.
     scorer.C.CROP_DIR = work / "crops"
