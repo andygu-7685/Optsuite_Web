@@ -58,6 +58,51 @@ g8e1_blur2.0.png                  4.70    20.6   0.2128    18.4  resolved    242
 g8e1_blur3.0.png                  2.91   154.6   0.3437    11.0  unresolved
 ```
 
+## Focus score against a template — [focus_score.py](focus_score.py)
+
+`fft_group89.py` *searches* the spectrum for the bar peak. When you already know
+which element a patch is, there is nothing to search for: `focus_score.py`
+reads the spectrum at that element's known frequency and compares it with an
+ideal rendering of the same element (the template) at the same scale, angle
+and pixel sampling:
+
+```
+MTF = sqrt((P_patch - P_noise) / P_template)      at the bar frequency
+```
+
+That is the optics' modulation transfer at the bar frequency: 1 means full
+contrast, 0 means the bars are blurred away. It doesn't depend on lighting or
+the noise level, and because it compares spectral magnitudes (not pixels), it
+tolerates a pixel or so of registration error. Per Z, the **focus score** is
+the mean MTF over the group 8/9 elements, both bar orientations.
+
+```bash
+python fft_poc/make_test_images.py                                  # synthetic sweep -> fft_poc/test_images
+python fft_poc/focus_score.py fft_poc/test_images --px-per-mm 1140  # -> fft_poc/test_images/report/report.html
+```
+
+Patches are named `g8e3_V_Z61_870.png` (element, `V`ertical/`H`orizontal bars,
+optional Z). The test set is a known-answer sweep: Gaussian defocus with some
+astigmatism, shot noise, and up to 1 px / 1 deg of misregistration. Its
+`manifest.csv` holds the true MTF of every patch, and the report checks the
+measurements against it.
+
+The report (`report.html`, single file, plus PNGs and `scores.csv`) has:
+
+- best focus Z (parabola-refined), per orientation, and the V–H gap (astigmatism)
+- the Z range where the focus score stays above 50% of its peak
+- the resolution limit at best focus (finest element with MTF >= 0.15 and >= 6 dB over noise, all coarser ones too)
+- MTF vs lp/mm at best and half focus, an element x Z heatmap, and measured-vs-true MTF
+
+Optional flags: `--na 0.4 --wavelength-nm 550` overlays the diffraction-limited
+MTF; `--black` subtracts a camera offset; `--mtf-threshold` and `--detect-db`
+set the resolved cut.
+
+Limits: elements above 0.42 cycles/px (about 480 lp/mm at 1140 px/mm, so g9e1)
+are measured but not scored. That close to Nyquist the result depends on
+where the bars fall within a pixel. The patch needs to be mostly one element
+on a white background, because the white level is read from the patch border.
+
 ## Caveats
 
 - The 15 dB threshold is a starting point from synthetic blurred bars, not a
