@@ -13,5 +13,6 @@ venv/
 # Generated analysis output and logs
 /runtime-data/
 /backend/runtime-data/
+/fft_poc/test_images/
 logs/
 *.log

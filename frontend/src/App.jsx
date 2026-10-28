@@ -1,5 +1,6 @@
 import { useEffect, useRef, useState } from 'react'
 import { getAnalysis, getOverlayObjectUrl, uploadAnalysis } from './api.js'
+import AccountControls from './AccountControls.jsx'
 import './App.css'
 
 const overlayStyles = [
@@ -195,6 +196,7 @@ export default function App() {
 
   useEffect(() => {
     function onKeyDown(event) {
+      if (event.target.closest?.('[role="dialog"]')) return
       if (!(event.ctrlKey || event.metaKey)) return
       if (event.key.toLowerCase() === 'o') {
         event.preventDefault()
@@ -261,6 +263,7 @@ export default function App() {
           <button type="button" className={zoom === 'fit' ? 'active' : ''} onClick={() => setZoom('fit')} disabled={!selectedFile}>Fit</button>
           <button type="button" className={zoom === 'actual' ? 'active' : ''} onClick={() => setZoom('actual')} disabled={!selectedFile}>1:1</button>
         </div>
+        <AccountControls />
       </header>
 
       <div className="workspace-body">
