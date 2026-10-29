@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState } from 'react'
 import { getAnalysis, getOverlayObjectUrl, uploadAnalysis } from './api.js'
 import AccountControls from './AccountControls.jsx'
+import ReportsPage from './ReportsPage.jsx'
 import { saveCharacterizationReport } from './saveReport.js'
 import { supabase } from './supabaseClient.js'
 import './App.css'
@@ -24,6 +25,7 @@ function formatResolution(value) {
 }
 
 export default function App() {
+  const [page, setPage] = useState(() => window.location.hash === '#/reports' ? 'reports' : 'workspace')
   const fileInputRef = useRef(null)
   const uploadRequestRef = useRef(0)
   const previewObjectUrlRef = useRef(null)
@@ -71,6 +73,14 @@ export default function App() {
       setSessionLoading(false)
     })
     return () => data.subscription.unsubscribe()
+  }, [])
+
+  useEffect(() => {
+    function onHashChange() {
+      setPage(window.location.hash === '#/reports' ? 'reports' : 'workspace')
+    }
+    window.addEventListener('hashchange', onHashChange)
+    return () => window.removeEventListener('hashchange', onHashChange)
   }, [])
 
   function replaceOverlayUrl(url) {
@@ -242,6 +252,7 @@ export default function App() {
 
   useEffect(() => {
     function onKeyDown(event) {
+      if (page === 'reports') return
       if (event.target.closest?.('[role="dialog"]')) return
       if (savePending) return
       if (!(event.ctrlKey || event.metaKey)) return
@@ -291,6 +302,10 @@ export default function App() {
   ] : []
   const shownImage = view === 'overlay' && overlayUrl ? overlayUrl : previewUrl
 
+  if (page === 'reports') {
+    return <ReportsPage session={session} sessionLoading={sessionLoading} />
+  }
+
   return (
     <main className="workspace">
       <header className="toolbar">
@@ -311,6 +326,7 @@ export default function App() {
           <button type="button" className={zoom === 'fit' ? 'active' : ''} onClick={() => setZoom('fit')} disabled={!selectedFile}>Fit</button>
           <button type="button" className={zoom === 'actual' ? 'active' : ''} onClick={() => setZoom('actual')} disabled={!selectedFile}>1:1</button>
         </div>
+        {session?.user && <a className="tool-button" href="#/reports">My reports</a>}
         <AccountControls session={session} sessionLoading={sessionLoading} signOutDisabled={savePending} />
       </header>
 
