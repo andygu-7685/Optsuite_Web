@@ -757,6 +757,19 @@ def calculate_scanline_contrast_scores(self, curr_image, yolo_detections=None, r
 
 
     # --------------------------------------------------------------------------------------------
+    # FFT scoring
+    # --------------------------------------------------------------------------------------------
+
+
+    # Runs after G1, because the bar frequency an element is measured at comes
+    # from the score table. normalized_gray is the whole frame scaled by its
+    # brightest pixel, which is also the bright reference a negative target needs.
+    self.C._fft_scores = self.score_scanlines_fft(normalized_gray, scanlines, side_length)
+    merged_fft = self.merge_fft_orientations(self.C._fft_scores) if self.C._fft_scores else {}
+
+
+
+    # --------------------------------------------------------------------------------------------
     # Visualization
     # --------------------------------------------------------------------------------------------
 
@@ -808,6 +821,16 @@ def calculate_scanline_contrast_scores(self, curr_image, yolo_detections=None, r
             "lp_per_mm": self.usaf_lp_per_mm(group, element),
             "resolution_mm": self.usaf_resolution_mm(group, element),
         }
+
+        fft_entry = merged_fft.get(i)
+        if fft_entry is not None:
+            mtf = fft_entry["mtf"]
+            detect_db = fft_entry["detect_db"]
+            scanline_map[f"{group}:{element}"]["fft"] = {
+                "mtf": float(mtf) if np.isfinite(mtf) else None,
+                "detect_db": float(detect_db) if np.isfinite(detect_db) else None,
+                "status": fft_entry["status"],
+            }
 
         if retry_instance == 0:
             self.C.initial_angle = np.abs(angle)
@@ -862,13 +885,29 @@ def find_usaf_score(self, image_path, imgsz=2048, threshold=0.3):
                 scores[idx], scanline_map[idx] = self.calculate_scanline_contrast_scores(curr_image, yolo_detections, idx)
                 
                 if self.C.YOLO_CLASSIFICATION:
-                    pattern_crop_result = self.score_pattern_crops(self.C.current_image_label)
+                    focus_result = self.score_pattern_crops(self.C.current_image_label)
                     if self.C.ENABLE_VERIFY_PATTERN_CROP:
-                        pattern_crop_result = self.verify_pattern_crops(pattern_crop_result)
-                    best_focus_group[idx] = [pattern_crop_result["group"], pattern_crop_result["element"]]
-                    chosen_index[idx] = pattern_crop_result["scan_index"]
+                        focus_result = self.verify_pattern_crops(focus_result)
                 else:
-                    best_focus_group[idx], chosen_index[idx] = self.find_best_focus_group(scores[idx], threshold=threshold)
+                    group_element, scan_index = self.find_best_focus_group(scores[idx], threshold=threshold)
+                    focus_result = None if group_element is None else {
+                        "group": group_element[0],
+                        "element": group_element[1],
+                        "scan_index": scan_index,
+                    }
+
+                # The FFT reads the same elements off the spectrum instead of the
+                # contrast, which keeps working where the bars are a few px wide.
+                if self.C.FFT_SCORING:
+                    focus_result = self.combine_focus_results(
+                        focus_result, self.find_fft_focus_group(self.C._fft_scores)
+                    )
+
+                if focus_result is None:
+                    best_focus_group[idx], chosen_index[idx] = None, None
+                else:
+                    best_focus_group[idx] = [focus_result["group"], focus_result["element"]]
+                    chosen_index[idx] = focus_result["scan_index"]
                 
                 if self.C.DEBUG_MODE and scores[idx] is not None and best_focus_group[idx] is not None:
                     print(f"scores[{idx}]", scores[idx])
@@ -1224,6 +1263,7 @@ def auto_configurator(self, image_path, imgsz=2048, threshold=0.3):
 
 def clean_up(self):
     self.C.G1 = 2
+    self.C._fft_scores = {}
     self.C.initialize_score_table()
     if self.C.CONST_LABEL and os.path.exists(self.C.CROP_DIR):
         # delete pattern crop 

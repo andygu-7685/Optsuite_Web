@@ -45,6 +45,10 @@ class UsafRegistration:
 
     from .scoring import score_pattern_crops
     from .scoring import find_best_focus_group
+    from .scoring import score_scanlines_fft
+    from .scoring import merge_fft_orientations
+    from .scoring import find_fft_focus_group
+    from .scoring import combine_focus_results
 
     from .sift_warp import get_sift_reference_image
     from .sift_warp import _sift_ref_origin_for_target

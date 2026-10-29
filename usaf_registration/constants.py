@@ -40,6 +40,17 @@ class UsafConfig:
         self.CROP_DIR = Path("pattern_crop")          # directory to save pattern crops for yolo classification
         self.CONST_LABEL = True                       # use constant label for yolo classification crop img
 
+        # FFT scoring settings
+        # Template-referenced MTF at each element's known bar frequency. Survives
+        # where the scanline contrast and the 256x256 crop classifier stop meaning
+        # anything, which is roughly below 4 px per line pair.
+        self.FFT_SCORING = True
+        self.FFT_EXTEND_ONLY = True      # True: FFT may only read finer than the classifier, never coarser
+        self.FFT_MTF_THRESHOLD = 0.15    # MTF needed to call an element resolved
+        self.FFT_DETECT_DB = 6.0         # ...and power over the local noise floor
+        self.FFT_PATCH_PERIODS = 4.0     # patch width in bar periods
+        self.FFT_DEBUG = False           # print the per-element MTF ladder
+
         # legacy algorithm settings
         self.SUBPIXEL = True                 # subpixel refinement for corner detection best for large target
         self.RETRY_OUTER = False              # if only inner corner detected, expand the scanline to outer target
@@ -155,6 +166,7 @@ class UsafConfig:
         self._itk_output_dir = None
         self._itk_roi_offset = (0, 0)
         self._itk_point_cache = {}
+        self._fft_scores = {}  # {scanline index: fft_scoring row} from the last scoring pass
         self.initial_angle = 0
 
         self._MODEL_CACHE = {}

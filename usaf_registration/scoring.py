@@ -1,5 +1,7 @@
 import cv2
+import numpy as np
 from pathlib import Path
+from . import fft_scoring
 from .pattern_crop import find_pattern_crop, classify_pattern_resolution, show_pattern_classification_results
 
 
@@ -200,3 +202,157 @@ def find_best_focus_group(self, scores_list, threshold=0.3):
     chosen_index = len(self.C.score_table) - 1
     return self.C.score_table[chosen_index], chosen_index
 
+
+
+
+
+
+
+
+
+
+
+# --------------------------------------------------------------------------------------------
+# FFT scoring
+# --------------------------------------------------------------------------------------------
+
+
+# The element could not be measured at this scale -- not a verdict about focus,
+# so the resolution-limit walk steps over it instead of stopping. The coarsest
+# element hits this routinely: a few periods of a 90 px period is past the
+# largest patch fft_scoring will build.
+FFT_UNMEASURABLE = ("patch too small", "patch off image", "no contrast", "no template")
+
+
+def score_scanlines_fft(self, gray, scanlines, side_length):
+    """MTF of every scanline's element, keyed the same way as the contrast scores.
+
+    gray is the whole frame as float in [0, 1]; scanlines carries the endpoints
+    the grid produced, which give both the patch centre and the bar angle. The
+    bar frequency comes from side_length, so this needs no extra calibration
+    beyond fft_scoring.MM_PER_USAF_UNIT.
+    """
+    if not self.C.FFT_SCORING or not scanlines:
+        return {}
+
+    px_per_mm = fft_scoring.px_per_mm_from_side_length(side_length, self.C.G1)
+    white_level = fft_scoring.frame_white_level(gray)
+    unique_count = len(self.C.score_table)
+
+    scores = {}
+    for index, scanline in scanlines.items():
+        group, element = self.C.score_table[index % unique_count]
+        row = fft_scoring.score_element(
+            gray, scanline["pt_a"], scanline["pt_b"], group, element, px_per_mm,
+            white_level=white_level,
+            patch_periods=self.C.FFT_PATCH_PERIODS,
+            mtf_threshold=self.C.FFT_MTF_THRESHOLD,
+            detect_db=self.C.FFT_DETECT_DB,
+        )
+        row["orientation"] = "vertical" if index < unique_count else "horizontal"
+        scores[index] = row
+
+    if self.C.FFT_DEBUG:
+        print(f"FFT scoring: {px_per_mm:.0f} px/mm from side_length {side_length:.1f}, "
+              f"G1 {self.C.G1}, white level {white_level:.3f}")
+    return scores
+
+
+def merge_fft_orientations(self, fft_scores):
+    """One entry per element, vertical and horizontal merged by SCORE_METHOD.
+
+    Mirrors how the contrast scores are merged, so the two paths can be compared
+    element for element. An element whose patch could not be built in one
+    orientation falls back to the other rather than dropping out.
+    """
+    unique_count = len(self.C.score_table)
+    merged = {}
+    for index in range(unique_count):
+        pair = [fft_scores.get(index), fft_scores.get(index + unique_count)]
+        usable = [r for r in pair if r is not None and r["status"] not in FFT_UNMEASURABLE
+                  and np.isfinite(r["mtf"])]
+        group, element = self.C.score_table[index]
+        entry = {"group": group, "element": element, "scan_index": index,
+                 "vertical": pair[0], "horizontal": pair[1]}
+
+        if not usable:
+            # Either unmeasurable (skip it) or past the sampling limit (stop there).
+            statuses = [r["status"] for r in pair if r is not None]
+            entry.update(mtf=float("nan"), detect_db=float("nan"),
+                         status=statuses[0] if statuses else "missing")
+            merged[index] = entry
+            continue
+
+        mtfs = [r["mtf"] for r in usable]
+        dbs = [r["detect_db"] for r in usable]
+        if self.C.SCORE_METHOD == "max":
+            mtf, detect_db = max(mtfs), max(dbs)
+        elif self.C.SCORE_METHOD == "mean":
+            mtf, detect_db = float(np.mean(mtfs)), float(np.mean(dbs))
+        else:
+            mtf, detect_db = min(mtfs), min(dbs)
+
+        entry.update(mtf=float(mtf), detect_db=float(detect_db),
+                     status="resolved" if mtf >= self.C.FFT_MTF_THRESHOLD
+                     and detect_db >= self.C.FFT_DETECT_DB else "unresolved")
+        merged[index] = entry
+    return merged
+
+
+def find_fft_focus_group(self, fft_scores):
+    """Finest element the FFT resolves, with every coarser measured one resolved too.
+
+    Same reading as score_pattern_crops, on a different measurement: walk from
+    coarse to fine and stop at the first element that is unresolved or past the
+    sampling limit. Returns the usual {group, element, scan_index} or None.
+    """
+    if not fft_scores:
+        return None
+
+    merged = self.merge_fft_orientations(fft_scores)
+    best = None
+    for index in sorted(merged):
+        entry = merged[index]
+        if entry["status"] in FFT_UNMEASURABLE or entry["status"] == "missing":
+            continue
+        if entry["status"] != "resolved":
+            break
+        best = entry
+
+    if self.C.FFT_DEBUG:
+        for index in sorted(merged):
+            entry = merged[index]
+            print(f"  FFT g{entry['group']}e{entry['element']}: "
+                  f"mtf {entry['mtf']:.3f} db {entry['detect_db']:6.1f}  {entry['status']}")
+        if best is None:
+            print("FFT found no resolved element")
+        else:
+            print(f"FFT best focus: group {best['group']}, element {best['element']}")
+
+    if best is None:
+        return None
+    return {"group": best["group"], "element": best["element"],
+            "scan_index": best["scan_index"], "mtf": best["mtf"]}
+
+
+def combine_focus_results(self, classifier_result, fft_result):
+    """Reconcile the classifier's answer with the FFT's.
+
+    With FFT_EXTEND_ONLY the FFT can only push the answer finer, never coarser:
+    on real frames it reads 0 to 5 elements past the classifier and never short
+    of it, so a coarser FFT answer means the FFT failed, not that the classifier
+    was optimistic.
+    """
+    if fft_result is None:
+        return classifier_result
+    if classifier_result is None:
+        return fft_result
+    if not self.C.FFT_EXTEND_ONLY:
+        return fft_result
+    if fft_result["scan_index"] <= classifier_result["scan_index"]:
+        return classifier_result
+    if self.C.DEBUG_MODE or self.C.FFT_DEBUG:
+        print(f"FFT extends the score from "
+              f"g{classifier_result['group']}e{classifier_result['element']} to "
+              f"g{fft_result['group']}e{fft_result['element']}")
+    return fft_result

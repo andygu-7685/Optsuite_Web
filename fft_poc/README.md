@@ -103,6 +103,27 @@ are measured but not scored. That close to Nyquist the result depends on
 where the bars fall within a pixel. The patch needs to be mostly one element
 on a white background, because the white level is read from the patch border.
 
+## In the pipeline — [usaf_registration/fft_scoring.py](../usaf_registration/fft_scoring.py)
+
+`focus_score.py` scores pre-cropped, axis-aligned patches of a positive target
+at a scale given on the command line. `fft_scoring.py` is the same measurement
+with the four things real pipeline frames need: the bar angle comes from the
+scanline, the patch is sized in bar periods, the contrast reference handles a
+negative target (bright bars on black, which is what this one is), and the
+scale comes from the grid's own `side_length`.
+
+```bash
+python fft_poc/validate_fft_scoring.py     # six checks, including parity with focus_score.py
+python fft_poc/calibrate_scale.py          # measures MM_PER_USAF_UNIT on real frames
+```
+
+`calibrate_scale.py` is not optional before trusting a number from a new optical
+setup. The score reads the spectrum at the frequency it is told to expect, and
+`MM_PER_USAF_UNIT` is what converts `side_length` into that frequency. Estimating
+it from the scanline spans gave 0.78; sweeping it against real frames gives
+0.565, a factor of sqrt(2) — three elements — which is enough to halve every MTF
+without the curve looking wrong.
+
 ## Caveats
 
 - The 15 dB threshold is a starting point from synthetic blurred bars, not a
