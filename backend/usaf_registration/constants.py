@@ -124,36 +124,6 @@ class UsafConfig:
         self.LOG_PATH = Path(self.BASE_DIR).parent.parent / "logs"
         self.LOG_PATH.mkdir(parents=True, exist_ok=True)
 
-        self.images = [
-            'test_img/test_image_new.png',
-            'test_img/test_image_g4e4.png',
-            'test_img/test_image_g5e4.png',
-            'test_img/af_Z59_370_183653_20260227_183653.png',
-            'test_img/test_image_g3e6.png',
-            'test_img/test_image_g6e6.png',
-            'test_img/af_z59_880_cam1_VEN-505-36U3M-M01_20260227_163955.png',
-            'test_img/image_g67only.png',
-            'test_img/image.png',
-            'test_img/Image0001.bmp',
-            'test_img/Screenshot_2026-05-06_085659.png',
-            'test_img/image_new_test.png',
-            r'C:\Users\USER\Documents\Research\auto_label\training_set\images\screenshot_cam1_VEN-505-36U3M-M01_20260710_180143 - Copy.png',
-            # r'C:\Users\USER\Documents\Research\auto_label\training_set\images\screenshot_cam1_VEN-505-36U3M-M01_20260710_180143.png',
-            # r'C:\Users\USER\Documents\Research\auto_label\training_set\images\screenshot_cam1_VEN-505-36U3M-M01_20260710_180341.png',
-            # r'C:\Users\USER\Documents\Research\auto_label\training_set\images\screenshot_cam1_VEN-505-36U3M-M01_20260710_180342 - Copy.png',
-            # r'C:\Users\USER\Documents\Research\auto_label\training_set\images\screenshot_cam1_VEN-505-36U3M-M01_20260710_180342.png',
-            # r'C:\Users\USER\Documents\Research\auto_label\training_set\images\screenshot_cam1_VEN-505-36U3M-M01_20260710_180343.png',
-            # r'C:\Users\USER\Documents\Research\auto_label\training_set\images\screenshot_cam1_VEN-505-36U3M-M01_20260710_180344.png',
-            # r'C:\Users\USER\Documents\Research\auto_label\training_set\images\screenshot_cam1_VEN-505-36U3M-M01_20260710_180345 - Copy.png',
-        ]
-
-        # Process images
-        # self.images = self.get_image_paths("ideal_test")
-        # print(f"Found {len(list(self.images))} files in folder:")
-        # for path in self.images:
-        #     print(str(path))
-        # print("---------------------------------")
-
         # Runtime / mutable state (kept here so each config object is self-contained)
         self.retry_flag = False              # global retry flag
         self.valid_squares = []

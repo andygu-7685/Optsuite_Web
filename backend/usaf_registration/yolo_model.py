@@ -8,11 +8,7 @@ from .transforms import yolo2screen
 
 BASE_DIR = Path(__file__).resolve().parent
 MODEL_PATH = BASE_DIR / "models/best23.pt"
-NUM_MODEL_PATH = BASE_DIR / "models/best_num_classify.pt"
-# RES_MODEL_PATH = BASE_DIR / "models/resolution_cls_model2.pt"
 RES_MODEL_PATH = BASE_DIR / "models/pattern_classify_v2_thresh_0.2.pt"
-# RES_MODEL_PATH = BASE_DIR / "models/0.2_threshold_classification.pt"
-# PT4_MODEL_PATH = BASE_DIR / "models/best_4p_4_focused.pt"
 PT4_MODEL_PATH = BASE_DIR / "models/4p_detect_ultra_pro_max.pt"
 SINGLE_SCANLINE_MODEL_PATH = BASE_DIR / "models/single_pattern_scanline_v2.pt"
 
