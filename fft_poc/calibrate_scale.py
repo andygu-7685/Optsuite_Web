@@ -33,14 +33,14 @@ import numpy as np
 ROOT = Path(__file__).resolve().parent.parent
 sys.path.insert(0, str(ROOT))
 
-from usaf_registration import UsafRegistration, fft_scoring as fs  # noqa: E402
+from backend.usaf_registration import UsafRegistration, fft_scoring as fs  # noqa: E402
 
 DEFAULT_IMAGES = [
-    "usaf_registration/test_img/test_image_g6e1.png",
-    "usaf_registration/test_img/test_image_g5e4.png",
-    "usaf_registration/test_img/test_image_g4e4.png",
-    "usaf_registration/test_img/test_image_new.png",
-    "usaf_registration/test_img/af_z59_880_cam1_VEN-505-36U3M-M01_20260227_163955.png",
+    "backend/usaf_registration/test_img/test_image_g6e1.png",
+    "backend/usaf_registration/test_img/test_image_g5e4.png",
+    "backend/usaf_registration/test_img/test_image_g4e4.png",
+    "backend/usaf_registration/test_img/test_image_new.png",
+    "backend/usaf_registration/test_img/af_z59_880_cam1_VEN-505-36U3M-M01_20260227_163955.png",
 ]
 # Coarse enough to be resolved in any usable frame, fine enough that the
 # template is not just a few fat bars.

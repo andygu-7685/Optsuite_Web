@@ -867,7 +867,10 @@ def find_usaf_score(self, image_path, imgsz=2048, threshold=0.3):
 
     if not self.is_image_clear(curr_image, 2.0):
         raise ValueError("usaf_algo.find_usaf_score: The image is too blurry for detection")
-    
+
+    self.C.last_classifier_focus = None
+    self.C.last_fft_focus = None
+
     while True:
         yolo_detections = None
         if self.C.YOLO_DETECT:
@@ -899,9 +902,12 @@ def find_usaf_score(self, image_path, imgsz=2048, threshold=0.3):
                 # The FFT reads the same elements off the spectrum instead of the
                 # contrast, which keeps working where the bars are a few px wide.
                 if self.C.FFT_SCORING:
-                    focus_result = self.combine_focus_results(
-                        focus_result, self.find_fft_focus_group(self.C._fft_scores)
-                    )
+                    fft_result = self.find_fft_focus_group(self.C._fft_scores)
+                    # Kept past clean_up so callers can show what each path read
+                    # on its own, not just the combined answer.
+                    self.C.last_classifier_focus = focus_result
+                    self.C.last_fft_focus = fft_result
+                    focus_result = self.combine_focus_results(focus_result, fft_result)
 
                 if focus_result is None:
                     best_focus_group[idx], chosen_index[idx] = None, None
@@ -1166,7 +1172,7 @@ def auto_configurator(self, image_path, imgsz=2048, threshold=0.3):
         elif sift_angle is None and classic_angle is not None:
             return "classic", self.C.FLIPED_TARGET, sift_config_index
         elif sift_angle is None and classic_angle is None and final_config is None:
-            if self.C.retry_flag == False:
+            if self.C.retry_flag == False and self.C.FLIP_OVERRIDE is None:
                 final_config = "retry"
                 self.C.FLIPED_TARGET = not self.C.FLIPED_TARGET
                 sift_config_index = 2
@@ -1237,7 +1243,7 @@ def auto_configurator(self, image_path, imgsz=2048, threshold=0.3):
         if "classic" not in bucket_score[dominant_bucket] or "sift" not in bucket_score[dominant_bucket]:
             # if any bucket that contain yolo only contain yolo for all bucket in bucket_score
             if all("classic" not in bucket and "sift" not in bucket for bucket in bucket_score if "yolo" in bucket):
-                if final_config is None and self.C.retry_flag == False:
+                if final_config is None and self.C.retry_flag == False and self.C.FLIP_OVERRIDE is None:
                     final_config = "retry"
                     self.C.FLIPED_TARGET = not self.C.FLIPED_TARGET
                     sift_config_index = 2
@@ -1297,12 +1303,13 @@ def score_image_routine(self, image_path):
             usaf_result = self.find_usaf_score(image_path, threshold=self.C.SCORE_THRESHOLD)
         
     except FileNotFoundError as e:
-        print(f"File not found error: {image_path}. {e}, Retry fliped.")
-        if default_config is not None:
-            default_config[1] = not default_config[1]
-        else:
-            self.C.FLIPED_TARGET = not self.C.FLIPED_TARGET
-        self.C.retry_flag = True
+        print(f"File not found error: {image_path}. {e}")
+        if self.C.FLIP_OVERRIDE is None:
+            if default_config is not None:
+                default_config[1] = not default_config[1]
+            else:
+                self.C.FLIPED_TARGET = not self.C.FLIPED_TARGET
+            self.C.retry_flag = True
     except Exception as e:
         if "classic_warp.find_square_corners: No valid square detected in the image" in str(e):
             print(f"No valid square detected in {image_path}. Skipping this image.")
@@ -1317,16 +1324,18 @@ def score_image_routine(self, image_path):
         elif "usaf_algo.auto_configurator: The image is too blurry for detection" in str(e):
             print(f"The image {image_path} is too blurry for detection. Skipping this image.")
         elif "usaf_algo.score_pattern_crops: Pattern crop classifier found unresolved at first scanned element, no valid focus score can be determined." in str(e):
-            print(f"{e} encountered for {image_path}. retrying this image.")
-            if default_config is not None:
-                default_config[1] = not default_config[1]
-            else:
-                self.C.FLIPED_TARGET = not self.C.FLIPED_TARGET
-            self.C.retry_flag = True
+            print(f"{e} encountered for {image_path}.")
+            if self.C.FLIP_OVERRIDE is None:
+                if default_config is not None:
+                    default_config[1] = not default_config[1]
+                else:
+                    self.C.FLIPED_TARGET = not self.C.FLIPED_TARGET
+                self.C.retry_flag = True
         elif "usaf_algo.auto_configurator: Coordinate calibration failed." in str(e):
-            print(f"Coordinate calibration failed for {image_path}. Retrying with flipped target.")
-            default_config[1] = not default_config[1]
-            self.C.retry_flag = True
+            print(f"Coordinate calibration failed for {image_path}.")
+            if self.C.FLIP_OVERRIDE is None:
+                default_config[1] = not default_config[1]
+                self.C.retry_flag = True
         else:
             print(f"Unknown error: {e}")
             raise e

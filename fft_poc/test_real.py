@@ -36,7 +36,7 @@ sys.path.insert(0, str(ROOT))
 sys.path.insert(0, str(ROOT / "fft_poc"))
 
 from calibrate_scale import DEFAULT_IMAGES, grid_for  # noqa: E402
-from usaf_registration import UsafRegistration, fft_scoring as fs  # noqa: E402
+from backend.usaf_registration import UsafRegistration, fft_scoring as fs  # noqa: E402
 
 LABEL_RE = re.compile(r"g(\d)e([1-6])", re.IGNORECASE)
 SIGMAS = (0.8, 1.5, 2.5)

@@ -9,6 +9,7 @@ class UsafConfig:
         self.DEBUG_MODE = False              # debug log + photo
         self.PREVIEW_MODE = False            # overview photo
         self.FLIPED_TARGET = True            # true if target is fliped
+        self.FLIP_OVERRIDE = None            # None detects orientation; bool fixes it for this analysis
         self.G1 = 2                          # first group number
         self.SCORE_THRESHOLD = 0.2          # threshold to determine if a scanline is valid, between 0 and 1 of the normalized score
         self.SCORE_METHOD = "min"
@@ -167,6 +168,10 @@ class UsafConfig:
         self._itk_roi_offset = (0, 0)
         self._itk_point_cache = {}
         self._fft_scores = {}  # {scanline index: fft_scoring row} from the last scoring pass
+        # What each path read on its own, before combine_focus_results merged them.
+        # Survives clean_up so the API can report both.
+        self.last_classifier_focus = None
+        self.last_fft_focus = None
         self.initial_angle = 0
 
         self._MODEL_CACHE = {}

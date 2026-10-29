@@ -31,7 +31,7 @@ ROOT = Path(__file__).resolve().parent.parent
 sys.path.insert(0, str(ROOT))
 sys.path.insert(0, str(ROOT / "fft_poc"))
 
-from usaf_registration import fft_scoring as fs  # noqa: E402
+from backend.usaf_registration import fft_scoring as fs  # noqa: E402
 
 PX_PER_MM = 1140.0          # same scale as make_test_images.py
 WHITE = 0.85
