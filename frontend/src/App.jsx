@@ -1,6 +1,8 @@
 import { useEffect, useRef, useState } from 'react'
 import { getAnalysis, getOverlayObjectUrl, uploadAnalysis } from './api.js'
 import AccountControls from './AccountControls.jsx'
+import { saveCharacterizationReport } from './saveReport.js'
+import { supabase } from './supabaseClient.js'
 import './App.css'
 
 const overlayStyles = [
@@ -42,9 +44,15 @@ export default function App() {
   const [overlayLoading, setOverlayLoading] = useState(false)
   const [jsonOpen, setJsonOpen] = useState(false)
   const [copied, setCopied] = useState(false)
+  const [session, setSession] = useState(null)
+  const [sessionLoading, setSessionLoading] = useState(Boolean(supabase))
+  const [savePending, setSavePending] = useState(false)
+  const [savedReportKey, setSavedReportKey] = useState(null)
+  const [saveNotice, setSaveNotice] = useState(null)
 
   const busy = ['uploading', 'queued', 'running'].includes(phase)
   const done = phase === 'done'
+  const currentReportKey = session?.user && analysisJob ? `${session.user.id}:${analysisJob.id}` : null
   const selectedStyle = overlayStyles.find((style) => style.id === overlayStyle)
   const statusText = errorMessage || {
     idle: 'Ready — open an image to begin',
@@ -55,6 +63,15 @@ export default function App() {
     done: 'Analysis complete',
     error: 'Analysis failed',
   }[phase]
+
+  useEffect(() => {
+    if (!supabase) return
+    const { data } = supabase.auth.onAuthStateChange((_event, nextSession) => {
+      setSession(nextSession)
+      setSessionLoading(false)
+    })
+    return () => data.subscription.unsubscribe()
+  }, [])
 
   function replaceOverlayUrl(url) {
     if (overlayObjectUrlRef.current) URL.revokeObjectURL(overlayObjectUrlRef.current)
@@ -136,7 +153,7 @@ export default function App() {
   }, [analysisJob, analysisResult, overlayStyle])
 
   function loadFile(file) {
-    if (!file) return
+    if (!file || savePending) return
     if (!file.type.startsWith('image/')) {
       setErrorMessage('Choose an image file to continue.')
       return
@@ -154,10 +171,12 @@ export default function App() {
     setView('original')
     setZoom('fit')
     setJsonOpen(false)
+    setSaveNotice(null)
+    setSavedReportKey(null)
   }
 
   function submitImage() {
-    if (!selectedFile || busy) return
+    if (!selectedFile || busy || savePending) return
     const requestId = ++uploadRequestRef.current
     setPhase('uploading')
     setErrorMessage('')
@@ -166,6 +185,8 @@ export default function App() {
     setOverlayLoading(false)
     replaceOverlayUrl(null)
     setView('original')
+    setSaveNotice(null)
+    setSavedReportKey(null)
     uploadAnalysis(selectedFile, overlayStyle, flipSetting === 'auto' ? null : flipSetting === 'yes')
       .then((job) => {
         if (requestId === uploadRequestRef.current) {
@@ -182,7 +203,7 @@ export default function App() {
   }
 
   function changeFlipSetting(value) {
-    if (value === flipSetting) return
+    if (value === flipSetting || savePending) return
     ++uploadRequestRef.current
     setFlipSetting(value)
     setAnalysisJob(null)
@@ -192,11 +213,37 @@ export default function App() {
     setView('original')
     setPhase(selectedFile ? 'ready' : 'idle')
     setErrorMessage('')
+    setSaveNotice(null)
+    setSavedReportKey(null)
+  }
+
+  async function saveReport() {
+    if (!supabase || !currentReportKey || !selectedFile || !overlayUrl || !analysisResult || savePending || savedReportKey === currentReportKey) return
+    setSavePending(true)
+    setSaveNotice(null)
+    try {
+      await saveCharacterizationReport({
+        client: supabase,
+        userId: session.user.id,
+        file: selectedFile,
+        overlayUrl,
+        result: analysisResult,
+        overlayStyle,
+        flipped: flipSetting === 'auto' ? null : flipSetting === 'yes',
+      })
+      setSavedReportKey(currentReportKey)
+      setSaveNotice({ type: 'success', text: 'Report saved to your account.' })
+    } catch (error) {
+      setSaveNotice({ type: 'error', text: `Could not save report: ${error.message || 'Please try again.'}` })
+    } finally {
+      setSavePending(false)
+    }
   }
 
   useEffect(() => {
     function onKeyDown(event) {
       if (event.target.closest?.('[role="dialog"]')) return
+      if (savePending) return
       if (!(event.ctrlKey || event.metaKey)) return
       if (event.key.toLowerCase() === 'o') {
         event.preventDefault()
@@ -249,11 +296,12 @@ export default function App() {
       <header className="toolbar">
         <div className="brand">OptiSuite Web</div>
         <span className="toolbar-divider" />
-        <button className="tool-button" type="button" onClick={() => fileInputRef.current?.click()} disabled={busy} title="Ctrl+O">Open image…</button>
-        <button className="tool-button primary" type="button" onClick={submitImage} disabled={!selectedFile || busy} title="Ctrl+Enter"><span className="play-icon" />{busy ? 'Analyzing…' : done ? 'Re-analyze' : 'Analyze'}</button>
+        <button className="tool-button" type="button" onClick={() => fileInputRef.current?.click()} disabled={busy || savePending} title="Ctrl+O">Open image…</button>
+        <button className="tool-button primary" type="button" onClick={submitImage} disabled={!selectedFile || busy || savePending} title="Ctrl+Enter"><span className="play-icon" />{busy ? 'Analyzing…' : done ? 'Re-analyze' : 'Analyze'}</button>
         <span className="toolbar-divider" />
         <a className={`tool-button ${!overlayUrl || overlayLoading ? 'disabled' : ''}`} href={overlayUrl || undefined} download={analysisJob ? `usaf-analysis-${analysisJob.id}-overlay.png` : undefined} aria-disabled={!overlayUrl || overlayLoading} onClick={(event) => { if (!overlayUrl || overlayLoading) event.preventDefault() }}>Export overlay</a>
         <button className="tool-button" type="button" onClick={downloadResults} disabled={!analysisResult}>Export JSON</button>
+        {session?.user && <button className="tool-button account-sign-up" type="button" onClick={saveReport} disabled={!done || !overlayUrl || overlayLoading || savePending || savedReportKey === currentReportKey}>{savePending ? 'Saving…' : savedReportKey === currentReportKey ? 'Saved' : 'Save report'}</button>}
         <div className="toolbar-spacer" />
         <div className="segmented" aria-label="Image view">
           <button type="button" className={view === 'overlay' && done ? 'active' : ''} onClick={() => setView('overlay')} disabled={!overlayUrl}>Overlay</button>
@@ -263,7 +311,7 @@ export default function App() {
           <button type="button" className={zoom === 'fit' ? 'active' : ''} onClick={() => setZoom('fit')} disabled={!selectedFile}>Fit</button>
           <button type="button" className={zoom === 'actual' ? 'active' : ''} onClick={() => setZoom('actual')} disabled={!selectedFile}>1:1</button>
         </div>
-        <AccountControls />
+        <AccountControls session={session} sessionLoading={sessionLoading} signOutDisabled={savePending} />
       </header>
 
       <div className="workspace-body">
@@ -294,7 +342,7 @@ export default function App() {
             <h2>Image flipped?</h2>
             <div className="flip-options" role="radiogroup" aria-label="Image flipped">
               {[['auto', 'Auto'], ['yes', 'Yes'], ['no', 'No']].map(([value, label]) => (
-                <button key={value} type="button" role="radio" aria-checked={flipSetting === value} className={flipSetting === value ? 'selected' : ''} onClick={() => changeFlipSetting(value)} disabled={busy}>
+                <button key={value} type="button" role="radio" aria-checked={flipSetting === value} className={flipSetting === value ? 'selected' : ''} onClick={() => changeFlipSetting(value)} disabled={busy || savePending}>
                   {label}
                 </button>
               ))}
@@ -304,7 +352,7 @@ export default function App() {
             <h2>Overlay style</h2>
             <div className="style-options" role="radiogroup" aria-label="Overlay style">
               {overlayStyles.map((style) => (
-                <button key={style.id} type="button" role="radio" aria-checked={style.id === overlayStyle} className={`style-option ${style.id === overlayStyle ? 'selected' : ''}`} onClick={() => { setOverlayStyle(style.id); if (analysisResult) setOverlayLoading(true) }}>
+                <button key={style.id} type="button" role="radio" aria-checked={style.id === overlayStyle} className={`style-option ${style.id === overlayStyle ? 'selected' : ''}`} onClick={() => { setOverlayStyle(style.id); if (analysisResult) { replaceOverlayUrl(null); setOverlayLoading(true) } }} disabled={savePending}>
                   <span className="radio-ring"><span /></span>
                   <span className="style-label"><span>{style.name}</span><small>{style.detail}</small></span>
                   <span className="style-swatch"><span className="swatch-label" style={{ color: style.label }}>G3E6</span><span className="swatch-line" style={{ background: style.line }} /></span>
@@ -314,7 +362,7 @@ export default function App() {
           </section>
         </aside>
 
-        <section className={`viewer ${dragging ? 'dragging' : ''}`} aria-label="Image viewer" onDragOver={(event) => { event.preventDefault(); setDragging(true) }} onDragLeave={(event) => { if (!event.currentTarget.contains(event.relatedTarget)) setDragging(false) }} onDrop={(event) => { event.preventDefault(); setDragging(false); if (!busy) loadFile(event.dataTransfer.files[0]) }}>
+        <section className={`viewer ${dragging ? 'dragging' : ''}`} aria-label="Image viewer" onDragOver={(event) => { event.preventDefault(); if (!savePending) setDragging(true) }} onDragLeave={(event) => { if (!event.currentTarget.contains(event.relatedTarget)) setDragging(false) }} onDrop={(event) => { event.preventDefault(); setDragging(false); if (!busy && !savePending) loadFile(event.dataTransfer.files[0]) }}>
           <input ref={fileInputRef} className="visually-hidden" type="file" accept="image/*" onChange={(event) => { loadFile(event.target.files?.[0]); event.target.value = '' }} />
           {!selectedFile ? (
             <button className="drop-zone" type="button" onClick={() => fileInputRef.current?.click()}>
@@ -342,6 +390,7 @@ export default function App() {
       </div>
 
       <footer className="status-bar"><span className={`status-dot ${busy ? 'busy' : done ? 'done' : selectedFile ? 'ready' : ''}`} /><span className="status-message" title={statusText}>{statusText}</span><span className="status-spacer" /><span>Overlay: {selectedStyle.name}</span>{imageDimensions && <span>{imageDimensions} px</span>}</footer>
+      {saveNotice && <div className={`save-notice ${saveNotice.type}`} role={saveNotice.type === 'error' ? 'alert' : 'status'}>{saveNotice.text}<button type="button" aria-label="Dismiss save message" onClick={() => setSaveNotice(null)}>×</button></div>}
     </main>
   )
 }

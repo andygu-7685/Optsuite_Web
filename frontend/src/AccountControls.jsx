@@ -1,11 +1,9 @@
 import { useEffect, useRef, useState } from 'react'
 import { supabase } from './supabaseClient.js'
 
-export default function AccountControls() {
+export default function AccountControls({ session, sessionLoading, signOutDisabled = false }) {
   const dialogRef = useRef(null)
   const openerRef = useRef(null)
-  const [session, setSession] = useState(null)
-  const [sessionLoading, setSessionLoading] = useState(Boolean(supabase))
   const [mode, setMode] = useState(null)
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
@@ -14,15 +12,6 @@ export default function AccountControls() {
   const [message, setMessage] = useState('')
   const [error, setError] = useState('')
   const [signOutError, setSignOutError] = useState('')
-
-  useEffect(() => {
-    if (!supabase) return
-    const { data } = supabase.auth.onAuthStateChange((_event, nextSession) => {
-      setSession(nextSession)
-      setSessionLoading(false)
-    })
-    return () => data.subscription.unsubscribe()
-  }, [])
 
   useEffect(() => {
     if (!mode) {
@@ -104,7 +93,7 @@ export default function AccountControls() {
         {sessionLoading ? <span className="account-label">Loading account…</span> : session ? (
           <>
             <span className="account-email" title={session.user.email}>{session.user.email}</span>
-            <button className="tool-button" type="button" onClick={signOut} disabled={pending}>Sign out</button>
+            <button className="tool-button" type="button" onClick={signOut} disabled={pending || signOutDisabled}>Sign out</button>
           </>
         ) : (
           <>
