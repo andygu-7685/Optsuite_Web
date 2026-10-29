@@ -90,6 +90,7 @@ class UsafRegistration:
 
     from .yolo_model import BASE_DIR
     from .yolo_model import MODEL_PATH
+    from .yolo_model import NUM_MODEL_PATH
     from .yolo_model import RES_MODEL_PATH
     from .yolo_model import PT4_MODEL_PATH
     from .yolo_model import SINGLE_SCANLINE_MODEL_PATH

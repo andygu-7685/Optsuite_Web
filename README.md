@@ -68,3 +68,20 @@ In the Input panel, choose **Image flipped?** before analyzing. **Auto** keeps
 orientation detection enabled; **Yes** and **No** use the selected orientation
 throughout scoring. Changing this setting after an analysis requires running
 Analyze again.
+
+The standalone `backend/usaf_registration/export_model.py` script is retained for
+manual ONNX exports. It is not part of the frontend build or startup flow.
+With the Python venv above activated, run:
+
+```bash
+python backend/usaf_registration/export_model.py
+```
+
+To export a different checkpoint or destination:
+
+```bash
+python backend/usaf_registration/export_model.py --model backend/usaf_registration/models/<name>.pt --out <output-directory>
+```
+
+Other options: `--imgsz` (default 640), `--opset` (default 17), `--out`, and
+`--no-simplify`.

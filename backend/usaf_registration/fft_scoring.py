@@ -1,15 +1,19 @@
 """Template-referenced FFT scoring of a single USAF element.
 
-The pipeline accounts for four properties of real target frames:
+Grown out of fft_poc/focus_score.py, with the four changes real pipeline data
+needs:
 
-  1. polarity   -- this target has bright bars on black, so the patch border is
-                   the dark reference and the bright reference comes from the
-                   frame. See contrast_amplitude().
-  2. angle      -- the bar direction comes from the scanline, so a rotated
-                   target works.
+  1. polarity   -- focus_score reads the white level from the patch border,
+                   which only works for dark bars on a bright field. This
+                   target is the other way round (bright bars on black), so the
+                   border is the *dark* reference and the bright one has to
+                   come from the frame. See contrast_amplitude().
+  2. angle      -- focus_score hardcodes vertical/horizontal bars. Here the bar
+                   direction comes from the scanline, so a rotated target works.
   3. patch size -- sized in bar periods instead of a fixed 72 px, so the same
                    call works from group 2 to group 9.
-  4. scale      -- px/mm is derived from the calibrated side_length.
+  4. scale      -- px/mm derived from the calibrated side_length instead of a
+                   command-line argument.
 
 The measurement itself is unchanged: the patch's power at the element's *known*
 bar frequency, divided by the power of an ideal rendering of the same element at
@@ -55,10 +59,11 @@ DETECT_DB = 6.0
 
 # Millimetres per USAF coordinate unit at the G1 = 2 nesting level, i.e. per
 # unit of the side_length that grid_calculation returns. DISC below wants this
-# good to about 3%, so it was measured by sweeping the assumed scale and taking
-# the peak of the mean MTF. Four of five calibration frames landed on 0.565
-# exactly and the blurriest on 0.527, over side_lengths of 225-231 px. Recalibrate
-# for a new optical setup; an earlier estimate from scanline
+# good to about 3%, so it is measured rather than reasoned about: see
+# fft_poc/calibrate_scale.py, which sweeps the assumed scale and takes the peak
+# of the mean MTF. Four of the five bundled frames land on 0.565 exactly and the
+# blurriest on 0.527, over side_lengths of 225-231 px. Re-run it for a new
+# optical setup, and do not trust a guess -- an earlier estimate from scanline
 # spans came out at 0.78, a factor of sqrt(2) (three elements) off, which is
 # enough to halve every MTF without looking obviously wrong.
 MM_PER_USAF_UNIT = 0.565
