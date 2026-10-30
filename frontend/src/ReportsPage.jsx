@@ -14,7 +14,7 @@ function formattedNumber(value, digits = 3) {
   return Number(value).toFixed(digits)
 }
 
-function ReportDetail({ userId, selectedId }) {
+function ReportDetail({ userId, selectedId, onDelete, deleting }) {
   const [detail, setDetail] = useState(null)
   const [detailLoading, setDetailLoading] = useState(true)
   const [detailError, setDetailError] = useState('')
@@ -68,7 +68,11 @@ function ReportDetail({ userId, selectedId }) {
   return <>
     <div className="reports-heading">
       <div><h2 title={detail?.original_name}>{detail?.original_name || 'Report'}</h2><span>{detail ? formattedDate(detail.created_at) : 'Loading…'}</span></div>
-      {images && <div className="reports-actions">{images.original && <a className="tool-button" href={images.original} download={detail.original_name}>Download original</a>}<a className="tool-button" href={images.overlay} download="overlay.png">Download overlay</a></div>}
+      {detail && <div className="reports-actions">
+        {images?.original && <a className="tool-button" href={images.original} download={detail.original_name}>Download original</a>}
+        {images?.overlay && <a className="tool-button" href={images.overlay} download="overlay.png">Download overlay</a>}
+        <button className="tool-button reports-delete" type="button" onClick={() => onDelete(detail)} disabled={deleting}>{deleting ? 'Deleting…' : 'Delete report'}</button>
+      </div>}
     </div>
     {detailError && <div className="reports-alert" role="alert">{detailError}</div>}
     {detailLoading && <p className="reports-muted reports-loading">Loading report and images…</p>}
@@ -110,6 +114,8 @@ function ReportsContent({ userId }) {
   const [selectedId, setSelectedId] = useState(null)
   const [listLoading, setListLoading] = useState(true)
   const [listError, setListError] = useState('')
+  const [deleteError, setDeleteError] = useState('')
+  const [deletingId, setDeletingId] = useState(null)
   const [hasMore, setHasMore] = useState(false)
   const [refreshKey, setRefreshKey] = useState(0)
   const listRequestRef = useRef(null)
@@ -170,6 +176,34 @@ function ReportsContent({ userId }) {
     setRefreshKey((value) => value + 1)
   }
 
+  async function deleteReport(report) {
+    if (deletingId || !window.confirm(`Permanently delete "${report.original_name}" and its saved images?`)) return
+    setDeletingId(report.id)
+    setDeleteError('')
+    let reportDeleted = false
+    try {
+      const { data, error } = await supabase
+        .from('characterization_reports')
+        .delete()
+        .eq('id', report.id)
+        .eq('user_id', userId)
+        .select('id')
+      if (error) throw error
+      if (!data?.length) throw new Error('Report was not found. Refresh the list and try again.')
+
+      reportDeleted = true
+      retry()
+      const { error: storageError } = await supabase.storage.from(BUCKET).remove([report.original_path, report.overlay_path])
+      if (storageError) throw storageError
+    } catch (error) {
+      setDeleteError(reportDeleted
+        ? `Report deleted, but its saved images could not be removed: ${error.message || 'Please try again.'}`
+        : `Could not delete report: ${error.message || 'Please try again.'}`)
+    } finally {
+      setDeletingId(null)
+    }
+  }
+
   return <main className="reports-layout">
     <aside className="reports-sidebar" aria-label="Saved reports">
       <div className="reports-sidebar-heading"><h1>Saved reports</h1><span>{reports.length}{hasMore ? '+' : ''}</span></div>
@@ -187,7 +221,8 @@ function ReportsContent({ userId }) {
     </aside>
 
     <section className="reports-main" aria-label="Report details">
-      {selectedId ? <ReportDetail key={selectedId} userId={userId} selectedId={selectedId} /> : <div className="reports-centered reports-empty">Select a report to view it.</div>}
+      {deleteError && <div className="reports-alert" role="alert">{deleteError}</div>}
+      {selectedId ? <ReportDetail key={selectedId} userId={userId} selectedId={selectedId} onDelete={deleteReport} deleting={deletingId === selectedId} /> : <div className="reports-centered reports-empty">Select a report to view it.</div>}
     </section>
   </main>
 }
