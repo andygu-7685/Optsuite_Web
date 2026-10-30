@@ -786,6 +786,15 @@ def calculate_scanline_contrast_scores(self, curr_image, yolo_detections=None, r
 
 
 
+    def fft_measurement(row):
+        if row is None:
+            return {"mtf": None, "detect_db": None, "status": "missing"}
+        return {
+            "mtf": float(row["mtf"]) if np.isfinite(row["mtf"]) else None,
+            "detect_db": float(row["detect_db"]) if np.isfinite(row["detect_db"]) else None,
+            "status": row["status"],
+        }
+
     final_score = {}
     scanline_map = {}
     for i in range(len(scores) // 2):
@@ -830,6 +839,10 @@ def calculate_scanline_contrast_scores(self, curr_image, yolo_detections=None, r
                 "mtf": float(mtf) if np.isfinite(mtf) else None,
                 "detect_db": float(detect_db) if np.isfinite(detect_db) else None,
                 "status": fft_entry["status"],
+                # The scanline crosses the bars, so its direction is perpendicular
+                # to the bar orientation on the registered target.
+                "horizontal_bars": fft_measurement(fft_entry["vertical"]),
+                "vertical_bars": fft_measurement(fft_entry["horizontal"]),
             }
 
         if retry_instance == 0:

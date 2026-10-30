@@ -147,3 +147,15 @@ kbd { padding: 1px 5px; border: 1px solid #4a4a52; border-radius: 2px; color: #e
 .mtf-bar.resolved { background: #5a2fd6; }
 .mtf-none { position: absolute; inset: 0; padding-left: 4px; color: #93929a; font-size: 9.5px; line-height: 9px; white-space: nowrap; }
 .fft-note { font-size: 10.5px; line-height: 1.45; }
+.fft-response { min-width: 0; margin: 0; padding: 8px 7px 7px; border: 1px solid #d4d4cf; border-radius: 3px; background: #fff; }
+.fft-response svg { display: block; width: 100%; height: auto; overflow: visible; }
+.fft-chart-title { margin: 0 0 5px; color: #5d5d66; font-size: 10.5px; font-weight: 600; }
+.fft-chart-legend { display: flex; flex-wrap: wrap; gap: 4px 10px; font-size: 10.5px; color: #5d5d66; }
+.fft-chart-legend span { display: inline-flex; align-items: center; gap: 4px; }
+.fft-chart-legend i { display: inline-block; width: 10px; height: 3px; border-radius: 2px; }
+.fft-chart-grid { stroke: #e9e9e5; stroke-width: 1; }
+.fft-chart-threshold { stroke: #a85d2a; stroke-width: 1; stroke-dasharray: 3 3; }
+.fft-chart-tick { fill: #777780; font-size: 9px; font-variant-numeric: tabular-nums; }
+.fft-chart-axis-label { fill: #5d5d66; font-size: 9.5px; }
+.fft-response figcaption { margin: 2px 3px 0; }
+.fft-chart-empty { padding: 10px; border: 1px solid #d4d4cf; border-radius: 3px; background: #fff; font-size: 11px; }

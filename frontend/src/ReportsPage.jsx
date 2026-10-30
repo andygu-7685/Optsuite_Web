@@ -1,5 +1,6 @@
 import { useEffect, useRef, useState } from 'react'
 import AccountControls from './AccountControls.jsx'
+import FftResponseChart from './FftResponseChart.jsx'
 import { supabase } from './supabaseClient.js'
 import './ReportsPage.css'
 
@@ -95,6 +96,12 @@ function ReportDetail({ userId, selectedId }) {
           <div><dt>Overlay style</dt><dd>{detail.overlay_style}</dd></div>
           <div><dt>Image flipped</dt><dd>{detail.flipped === null ? 'Auto' : detail.flipped ? 'Yes' : 'No'}</dd></div>
         </dl>
+        {detail.result?.elements?.some((element) => element.fft_orientations?.horizontal_bars || element.fft_orientations?.vertical_bars) && (
+          <>
+            <h3>FFT frequency response</h3>
+            <FftResponseChart elements={detail.result.elements} threshold={detail.result.fft?.mtf_threshold} detectDb={detail.result.fft?.detect_db} />
+          </>
+        )}
         <h3>Measured elements</h3>
         {detail.result?.elements?.length ? <div className="reports-table-wrap"><table className="reports-elements"><thead><tr><th>Element</th><th>lp/mm</th><th>Score</th></tr></thead><tbody>
           {detail.result.elements.map((element, index) => <tr key={`${element.group}-${element.element}-${index}`} className={element.selected ? 'best' : ''}><td>G{element.group} E{element.element}</td><td>{formattedNumber(element.lp_per_mm)}</td><td>{formattedNumber(element.contrast_score, 2)}</td></tr>)}

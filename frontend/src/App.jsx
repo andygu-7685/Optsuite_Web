@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState } from 'react'
 import { getAnalysis, getOverlayObjectUrl, uploadAnalysis } from './api.js'
 import AccountControls from './AccountControls.jsx'
+import FftResponseChart from './FftResponseChart.jsx'
 import ReportsPage from './ReportsPage.jsx'
 import { saveCharacterizationReport } from './saveReport.js'
 import { supabase } from './supabaseClient.js'
@@ -424,6 +425,7 @@ export default function App() {
                 <div><dt>FFT</dt><dd>{formatElement(fft.fft_limit)}</dd></div>
                 <div><dt>Extended</dt><dd>{formatExtension(fft.extended_by)}</dd></div>
               </dl>
+              <FftResponseChart elements={fftLadder} threshold={fft.mtf_threshold} detectDb={fft.detect_db} />
               <div className="mtf-ladder" style={{ '--threshold': `${fft.mtf_threshold * 100}%` }}>
                 {fftLadder.map((el) => (
                   <div key={`${el.group}:${el.element}`} className={el.selected ? 'mtf-row selected' : 'mtf-row'}>

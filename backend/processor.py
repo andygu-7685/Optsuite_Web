@@ -103,6 +103,10 @@ def analyze(image_path: str, job_dir: str, overlay_style: str = "classic", flipp
             "fft_mtf": fft.get("mtf"),
             "fft_detect_db": fft.get("detect_db"),
             "fft_status": fft.get("status"),
+            "fft_orientations": {
+                "horizontal_bars": fft.get("horizontal_bars"),
+                "vertical_bars": fft.get("vertical_bars"),
+            },
             "vertical": item["vertical"],
             "horizontal": item["horizontal"],
             "selected": selected,
