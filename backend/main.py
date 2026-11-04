@@ -48,6 +48,11 @@ app.add_middleware(
 )
 
 
+@app.get("/api/health")
+def health():
+    return {"status": "ok"}
+
+
 def get_job(job_id: str, token: str | None):
     job = jobs.get(job_id)
     if not job or not token or not hmac.compare_digest(
