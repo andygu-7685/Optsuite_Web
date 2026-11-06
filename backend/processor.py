@@ -1,10 +1,16 @@
 import os
+import hashlib
+from functools import lru_cache
 from pathlib import Path
 
 os.environ.setdefault("MPLBACKEND", "Agg")
 
 import cv2
 from backend.usaf_registration import UsafRegistration
+from backend.usaf_registration.yolo_model import (
+    MODEL_PATH, NUM_MODEL_PATH, RES_MODEL_PATH, PT4_MODEL_PATH,
+    SINGLE_SCANLINE_MODEL_PATH,
+)
 
 OVERLAY_STYLES = {
     "classic": {
@@ -24,6 +30,40 @@ OVERLAY_STYLES = {
         "label_color": (255, 255, 255), "label_width": 2,
     },
 }
+
+
+def file_sha256(path: Path) -> str:
+    with path.open("rb") as stream:
+        return hashlib.file_digest(stream, "sha256").hexdigest()
+
+
+@lru_cache(maxsize=1)
+def analysis_provenance() -> dict:
+    """Fingerprint the code, checkpoints and calibration images used by this deployment."""
+    source_dir = Path(__file__).resolve().parent / "usaf_registration"
+    code_files = sorted(source_dir.glob("*.py")) + [Path(__file__).resolve()]
+    code_hash = hashlib.sha256()
+    for path in code_files:
+        code_hash.update(path.name.encode())
+        code_hash.update(path.read_bytes())
+
+    files = {
+        "pattern_detection": MODEL_PATH,
+        "number_classification": NUM_MODEL_PATH,
+        "pattern_classification": RES_MODEL_PATH,
+        "four_point_detection": PT4_MODEL_PATH,
+        "single_scanline": SINGLE_SCANLINE_MODEL_PATH,
+        "sift_reference": source_dir / "test_img" / "SIFT_ref_image.png",
+        "sift_reference_bordered": source_dir / "test_img" / "new_SIFT_ref_image_bordered.png",
+        "sift_reference_g67": source_dir / "test_img" / "image_g67only.png",
+    }
+    return {
+        "algorithm_sha256": code_hash.hexdigest(),
+        "assets": {
+            role: {"file": path.name, "sha256": file_sha256(path)}
+            for role, path in files.items()
+        },
+    }
 
 
 def draw_overlay(image, elements: list[dict], best: dict, style: dict):
@@ -57,6 +97,7 @@ def draw_overlay(image, elements: list[dict], best: dict, style: dict):
 
 
 def analyze(image_path: str, job_dir: str, overlay_style: str = "classic", flipped: bool | None = None) -> dict:
+    provenance = analysis_provenance()
     work = Path(job_dir)
     style = OVERLAY_STYLES[overlay_style]
     scorer = UsafRegistration()
@@ -109,6 +150,7 @@ def analyze(image_path: str, job_dir: str, overlay_style: str = "classic", flipp
     cv2.imwrite(str(work / "overlay.png"), draw_overlay(image, elements, best, style))
 
     return {
+        "provenance": provenance,
         "results": {
             "highest_selected_element": {"group": group, "element": element},
             "resolution_mm": best["resolution_mm"],

@@ -1,6 +1,8 @@
 import { useEffect, useRef, useState } from 'react'
 import { getAnalysis, getOverlayObjectUrl, uploadAnalysis } from './api.js'
 import AccountControls from './AccountControls.jsx'
+import MicroscopeProfiles from './MicroscopeProfiles.jsx'
+import { snapshotProfile } from './profileSnapshot.js'
 import ReportsPage from './ReportsPage.jsx'
 import { saveCharacterizationReport } from './saveReport.js'
 import { supabase } from './supabaseClient.js'
@@ -30,12 +32,16 @@ export default function App() {
   const uploadRequestRef = useRef(0)
   const previewObjectUrlRef = useRef(null)
   const overlayObjectUrlRef = useRef(null)
+  const sessionUserIdRef = useRef(null)
   const [selectedFile, setSelectedFile] = useState(null)
   const [previewUrl, setPreviewUrl] = useState(null)
   const [imageDimensions, setImageDimensions] = useState('')
   const [overlayUrl, setOverlayUrl] = useState(null)
   const [overlayStyle, setOverlayStyle] = useState('classic')
   const [flipSetting, setFlipSetting] = useState('auto')
+  const [selectedProfile, setSelectedProfile] = useState(null)
+  const [runProfile, setRunProfile] = useState(null)
+  const [runFlipSetting, setRunFlipSetting] = useState('auto')
   const [analysisJob, setAnalysisJob] = useState(null)
   const [analysisResult, setAnalysisResult] = useState(null)
   const [phase, setPhase] = useState('idle')
@@ -69,6 +75,11 @@ export default function App() {
   useEffect(() => {
     if (!supabase) return
     const { data } = supabase.auth.onAuthStateChange((_event, nextSession) => {
+      if (nextSession?.user?.id !== sessionUserIdRef.current) {
+        setSelectedProfile(null)
+        setRunProfile(null)
+      }
+      sessionUserIdRef.current = nextSession?.user?.id || null
       setSession(nextSession)
       setSessionLoading(false)
     })
@@ -183,6 +194,7 @@ export default function App() {
     setJsonOpen(false)
     setSaveNotice(null)
     setSavedReportKey(null)
+    setRunProfile(null)
   }
 
   function submitImage() {
@@ -197,6 +209,8 @@ export default function App() {
     setView('original')
     setSaveNotice(null)
     setSavedReportKey(null)
+    setRunProfile(snapshotProfile(selectedProfile))
+    setRunFlipSetting(flipSetting)
     uploadAnalysis(selectedFile, overlayStyle, flipSetting === 'auto' ? null : flipSetting === 'yes')
       .then((job) => {
         if (requestId === uploadRequestRef.current) {
@@ -225,10 +239,19 @@ export default function App() {
     setErrorMessage('')
     setSaveNotice(null)
     setSavedReportKey(null)
+    setRunProfile(null)
   }
 
   async function saveReport() {
     if (!supabase || !currentReportKey || !selectedFile || !overlayUrl || !analysisResult || savePending || savedReportKey === currentReportKey) return
+    if (!runProfile) {
+      setSaveNotice({ type: 'error', text: 'Choose a microscope profile and analyze again before saving.' })
+      return
+    }
+    if (!analysisResult.provenance) {
+      setSaveNotice({ type: 'error', text: 'Run provenance is missing. Analyze again before saving.' })
+      return
+    }
     setSavePending(true)
     setSaveNotice(null)
     try {
@@ -239,7 +262,9 @@ export default function App() {
         overlayUrl,
         result: analysisResult,
         overlayStyle,
-        flipped: flipSetting === 'auto' ? null : flipSetting === 'yes',
+        flipped: runFlipSetting === 'auto' ? null : runFlipSetting === 'yes',
+        profile: { ...runProfile, overlay_style: overlayStyle, flip_setting: runFlipSetting },
+        provenance: analysisResult.provenance,
       })
       setSavedReportKey(currentReportKey)
       setSaveNotice({ type: 'success', text: 'Report saved to your account.' })
@@ -302,6 +327,14 @@ export default function App() {
   ] : []
   const shownImage = view === 'overlay' && overlayUrl ? overlayUrl : previewUrl
 
+  function selectProfile(profile) {
+    setSelectedProfile(profile)
+    if (!analysisJob && profile) {
+      setOverlayStyle(profile.overlay_style)
+      setFlipSetting(profile.flip_setting)
+    }
+  }
+
   if (page === 'reports') {
     return <ReportsPage session={session} sessionLoading={sessionLoading} />
   }
@@ -316,7 +349,7 @@ export default function App() {
         <span className="toolbar-divider" />
         <a className={`tool-button ${!overlayUrl || overlayLoading ? 'disabled' : ''}`} href={overlayUrl || undefined} download={analysisJob ? `usaf-analysis-${analysisJob.id}-overlay.png` : undefined} aria-disabled={!overlayUrl || overlayLoading} onClick={(event) => { if (!overlayUrl || overlayLoading) event.preventDefault() }}>Export overlay</a>
         <button className="tool-button" type="button" onClick={downloadResults} disabled={!analysisResult}>Export JSON</button>
-        {session?.user && <button className="tool-button account-sign-up" type="button" onClick={saveReport} disabled={!done || !overlayUrl || overlayLoading || savePending || savedReportKey === currentReportKey}>{savePending ? 'Saving…' : savedReportKey === currentReportKey ? 'Saved' : 'Save report'}</button>}
+        {session?.user && <button className="tool-button account-sign-up" type="button" onClick={saveReport} title={!runProfile ? 'Select a microscope profile and analyze an image first' : undefined} disabled={!done || !runProfile || !overlayUrl || overlayLoading || savePending || savedReportKey === currentReportKey}>{savePending ? 'Saving…' : savedReportKey === currentReportKey ? 'Saved' : 'Save report'}</button>}
         <div className="toolbar-spacer" />
         <div className="segmented" aria-label="Image view">
           <button type="button" className={view === 'overlay' && done ? 'active' : ''} onClick={() => setView('overlay')} disabled={!overlayUrl}>Overlay</button>
@@ -343,6 +376,7 @@ export default function App() {
               ))}
             </ol>
           </section>
+          <MicroscopeProfiles key={session?.user?.id || 'anonymous'} userId={session?.user?.id} selectedProfile={selectedProfile} onSelect={selectProfile} disabled={busy || savePending || done} />
           <section className="panel-section input-section">
             <h2>Input</h2>
             {selectedFile ? (
@@ -405,7 +439,7 @@ export default function App() {
         </aside>
       </div>
 
-      <footer className="status-bar"><span className={`status-dot ${busy ? 'busy' : done ? 'done' : selectedFile ? 'ready' : ''}`} /><span className="status-message" title={statusText}>{statusText}</span><span className="status-spacer" /><span>Overlay: {selectedStyle.name}</span>{imageDimensions && <span>{imageDimensions} px</span>}</footer>
+      <footer className="status-bar"><span className={`status-dot ${busy ? 'busy' : done ? 'done' : selectedFile ? 'ready' : ''}`} /><span className="status-message" title={statusText}>{statusText}</span><span className="status-spacer" />{runProfile && <span>Run: {runProfile.name}</span>}<span>Overlay: {selectedStyle.name}</span>{imageDimensions && <span>{imageDimensions} px</span>}</footer>
       {saveNotice && <div className={`save-notice ${saveNotice.type}`} role={saveNotice.type === 'error' ? 'alert' : 'status'}>{saveNotice.text}<button type="button" aria-label="Dismiss save message" onClick={() => setSaveNotice(null)}>×</button></div>}
     </main>
   )

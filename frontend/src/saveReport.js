@@ -1,6 +1,6 @@
 const BUCKET = 'characterization-images'
 
-export async function saveCharacterizationReport({ client, userId, file, overlayUrl, result, overlayStyle, flipped }) {
+export async function saveCharacterizationReport({ client, userId, file, overlayUrl, result, overlayStyle, flipped, profile, provenance }) {
   const reportId = crypto.randomUUID()
   const extension = file.name.match(/\.[a-z0-9]+$/i)?.[0].toLowerCase() || '.bin'
   const prefix = `${userId}/${reportId}`
@@ -36,6 +36,9 @@ export async function saveCharacterizationReport({ client, userId, file, overlay
       overlay_path: overlayPath,
       overlay_style: overlayStyle,
       flipped,
+      profile_id: profile.id,
+      profile_snapshot: profile,
+      provenance,
       best_group: result.best.group,
       best_element: result.best.element,
       lp_per_mm: result.best.lp_per_mm,

@@ -5,6 +5,7 @@
 .reports-sidebar-heading { display: flex; align-items: center; justify-content: space-between; gap: 8px; padding: 16px 14px 12px; border-bottom: 1px solid #e0e0db; }
 .reports-sidebar-heading h1 { margin: 0; font-size: 14px; font-weight: 600; }
 .reports-sidebar-heading span { color: #74747c; font-size: 12px; }
+.reports-filter { margin: 8px 12px; padding: 6px; border: 1px solid #c9c9c3; border-radius: 3px; background: #fff; color: #1c1c21; font: inherit; }
 .reports-list { display: grid; align-content: start; padding: 6px; }
 .reports-list-item { display: grid; gap: 3px; width: 100%; padding: 10px 9px; border: 1px solid transparent; border-radius: 3px; background: transparent; color: #1c1c21; text-align: left; cursor: pointer; }
 .reports-list-item:hover { background: #ecebe8; }

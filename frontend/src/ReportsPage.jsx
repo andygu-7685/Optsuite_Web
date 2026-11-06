@@ -93,12 +93,24 @@ function ReportDetail({ userId, selectedId, onDelete, deleting }) {
       <aside className="reports-data">
         <h3>Characterization</h3>
         <dl className="reports-facts">
+          <div><dt>Microscope</dt><dd>{detail.profile_snapshot?.name || 'Unassigned'}</dd></div>
           <div><dt>Best group / element</dt><dd>G{detail.best_group} E{detail.best_element}</dd></div>
           <div><dt>Resolving power</dt><dd>{formattedNumber(detail.lp_per_mm)} lp/mm</dd></div>
           <div><dt>Resolution</dt><dd>{formattedNumber(detail.resolution_mm, 4)} mm</dd></div>
           <div><dt>Overlay style</dt><dd>{detail.overlay_style}</dd></div>
           <div><dt>Image flipped</dt><dd>{detail.flipped === null ? 'Auto' : detail.flipped ? 'Yes' : 'No'}</dd></div>
         </dl>
+        {detail.profile_snapshot && <>
+          <h3>Profile at analysis</h3>
+          <dl className="reports-facts">
+            {[
+              ['Description', detail.profile_snapshot.description],
+              ['Flip setting', detail.profile_snapshot.flip_setting],
+            ].filter(([, value]) => value !== null && value !== '').map(([label, value]) =>
+              <div key={label}><dt>{label}</dt><dd>{value}</dd></div>)}
+          </dl>
+        </>}
+        {detail.provenance && <details className="reports-json"><summary>Code, model and calibration versions</summary><pre>{JSON.stringify(detail.provenance, null, 2)}</pre></details>}
         <h3>Measured elements</h3>
         {detail.result?.elements?.length ? <div className="reports-table-wrap"><table className="reports-elements"><thead><tr><th>Element</th><th>lp/mm</th><th>Score</th></tr></thead><tbody>
           {detail.result.elements.map((element, index) => <tr key={`${element.group}-${element.element}-${index}`} className={element.selected ? 'best' : ''}><td>G{element.group} E{element.element}</td><td>{formattedNumber(element.lp_per_mm)}</td><td>{formattedNumber(element.contrast_score, 2)}</td></tr>)}
@@ -118,19 +130,30 @@ function ReportsContent({ userId }) {
   const [deletingId, setDeletingId] = useState(null)
   const [hasMore, setHasMore] = useState(false)
   const [refreshKey, setRefreshKey] = useState(0)
+  const [profiles, setProfiles] = useState([])
+  const [profileFilter, setProfileFilter] = useState('all')
   const listRequestRef = useRef(null)
+
+  useEffect(() => {
+    let active = true
+    supabase.from('microscope_profiles').select('id,name').eq('user_id', userId).order('name')
+      .then(({ data }) => { if (active) setProfiles(data || []) })
+    return () => { active = false }
+  }, [userId])
 
   useEffect(() => {
     const request = { active: true }
     listRequestRef.current = request
     async function loadFirstPage() {
-      const { data, error } = await supabase
+      let query = supabase
         .from('characterization_reports')
-        .select('id,created_at,original_name,best_group,best_element,lp_per_mm')
+        .select('id,created_at,original_name,best_group,best_element,lp_per_mm,profile_snapshot')
         .eq('user_id', userId)
         .order('created_at', { ascending: false })
         .order('id', { ascending: false })
         .range(0, PAGE_SIZE - 1)
+      if (profileFilter !== 'all') query = profileFilter === 'unassigned' ? query.is('profile_id', null) : query.eq('profile_id', profileFilter)
+      const { data, error } = await query
       if (!request.active) return
       if (error) setListError(error.message)
       else {
@@ -144,20 +167,22 @@ function ReportsContent({ userId }) {
     return () => {
       request.active = false
     }
-  }, [userId, refreshKey])
+  }, [userId, refreshKey, profileFilter])
 
   async function loadMore() {
     if (listLoading || !hasMore) return
     const request = listRequestRef.current
     setListLoading(true)
     setListError('')
-    const { data, error } = await supabase
+    let query = supabase
       .from('characterization_reports')
-      .select('id,created_at,original_name,best_group,best_element,lp_per_mm')
+      .select('id,created_at,original_name,best_group,best_element,lp_per_mm,profile_snapshot')
       .eq('user_id', userId)
       .order('created_at', { ascending: false })
       .order('id', { ascending: false })
       .range(reports.length, reports.length + PAGE_SIZE - 1)
+    if (profileFilter !== 'all') query = profileFilter === 'unassigned' ? query.is('profile_id', null) : query.eq('profile_id', profileFilter)
+    const { data, error } = await query
     if (!request?.active) return
     if (error) setListError(error.message)
     else {
@@ -207,12 +232,18 @@ function ReportsContent({ userId }) {
   return <main className="reports-layout">
     <aside className="reports-sidebar" aria-label="Saved reports">
       <div className="reports-sidebar-heading"><h1>Saved reports</h1><span>{reports.length}{hasMore ? '+' : ''}</span></div>
+      <select className="reports-filter" aria-label="Filter reports by microscope" value={profileFilter} onChange={(event) => { setProfileFilter(event.target.value); setReports([]); setSelectedId(null); setListLoading(true); setListError('') }}>
+        <option value="all">All microscopes</option>
+        {profiles.map((profile) => <option key={profile.id} value={profile.id}>{profile.name}</option>)}
+        <option value="unassigned">Older unassigned reports</option>
+      </select>
       {listError && <div className="reports-alert" role="alert">Could not load reports: {listError}<button type="button" onClick={retry}>Retry</button></div>}
       {listLoading && reports.length === 0 && <p className="reports-muted">Loading reports…</p>}
       {!listLoading && !listError && reports.length === 0 && <p className="reports-muted">No saved reports yet. Analyze an image in the workspace and choose Save report.</p>}
       <div className="reports-list">
         {reports.map((report) => <button key={report.id} className={`reports-list-item ${report.id === selectedId ? 'selected' : ''}`} type="button" aria-pressed={report.id === selectedId} onClick={() => setSelectedId(report.id)}>
           <strong title={report.original_name}>{report.original_name}</strong>
+          <span>{report.profile_snapshot?.name || 'Unassigned microscope'}</span>
           <span>{formattedDate(report.created_at)}</span>
           <small>G{report.best_group} E{report.best_element} · {formattedNumber(report.lp_per_mm)} lp/mm</small>
         </button>)}
