@@ -1,6 +1,6 @@
 .workspace { height: 100vh; height: 100dvh; display: grid; grid-template-rows: 40px minmax(0, 1fr) 24px; font-size: 13px; }
 .toolbar { display: flex; align-items: center; gap: 6px; padding: 0 10px; background: #f6f6f4; border-bottom: 1px solid #d4d4cf; min-width: 0; overflow-x: auto; white-space: nowrap; }
-.brand { flex: none; padding: 0 8px 0 4px; font-weight: 600; }
+.brand { flex: none; padding: 0 8px 0 4px; color: inherit; font-weight: 600; text-decoration: none; }
 .toolbar-divider { flex: none; width: 1px; height: 20px; margin: 0 4px; background: #d4d4cf; }
 .tool-button { flex: none; display: inline-flex; align-items: center; justify-content: center; gap: 6px; height: 26px; padding: 0 10px; border: 1px solid #c9c9c3; border-radius: 3px; background: #fff; color: #1c1c21; text-decoration: none; font-size: 12.5px; cursor: pointer; }
 .tool-button:hover:not(:disabled):not(.disabled) { background: #f0f0ee; }

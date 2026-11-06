@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState } from 'react'
 import { getAnalysis, getOverlayObjectUrl, uploadAnalysis } from './api.js'
 import AccountControls from './AccountControls.jsx'
+import LandingPage from './LandingPage.jsx'
 import MicroscopeProfiles from './MicroscopeProfiles.jsx'
 import { snapshotProfile } from './profileSnapshot.js'
 import ReportsPage from './ReportsPage.jsx'
@@ -15,6 +16,12 @@ const overlayStyles = [
   { id: 'green_white', name: 'Green + white', detail: '2 px lines · 2 px labels', line: '#4dff6a', label: '#ffffff' },
 ]
 
+function pageFromHash() {
+  if (window.location.hash === '#/reports') return 'reports'
+  if (window.location.hash === '#/analysis') return 'workspace'
+  return 'landing'
+}
+
 function formatSize(bytes) {
   return bytes >= 1024 * 1024
     ? `${(bytes / (1024 * 1024)).toFixed(1)} MB`
@@ -27,7 +34,7 @@ function formatResolution(value) {
 }
 
 export default function App() {
-  const [page, setPage] = useState(() => window.location.hash === '#/reports' ? 'reports' : 'workspace')
+  const [page, setPage] = useState(pageFromHash)
   const fileInputRef = useRef(null)
   const uploadRequestRef = useRef(0)
   const previewObjectUrlRef = useRef(null)
@@ -88,7 +95,7 @@ export default function App() {
 
   useEffect(() => {
     function onHashChange() {
-      setPage(window.location.hash === '#/reports' ? 'reports' : 'workspace')
+      setPage(pageFromHash())
     }
     window.addEventListener('hashchange', onHashChange)
     return () => window.removeEventListener('hashchange', onHashChange)
@@ -277,7 +284,7 @@ export default function App() {
 
   useEffect(() => {
     function onKeyDown(event) {
-      if (page === 'reports') return
+      if (page !== 'workspace') return
       if (event.target.closest?.('[role="dialog"]')) return
       if (savePending) return
       if (!(event.ctrlKey || event.metaKey)) return
@@ -339,10 +346,14 @@ export default function App() {
     return <ReportsPage session={session} sessionLoading={sessionLoading} />
   }
 
+  if (page === 'landing') {
+    return <LandingPage />
+  }
+
   return (
     <main className="workspace">
       <header className="toolbar">
-        <div className="brand">OptiSuite Web</div>
+        <a className="brand" href="#/">OptiSuite Web</a>
         <span className="toolbar-divider" />
         <button className="tool-button" type="button" onClick={() => fileInputRef.current?.click()} disabled={busy || savePending} title="Ctrl+O">Open image…</button>
         <button className="tool-button primary" type="button" onClick={submitImage} disabled={!selectedFile || busy || savePending} title="Ctrl+Enter"><span className="play-icon" />{busy ? 'Analyzing…' : done ? 'Re-analyze' : 'Analyze'}</button>

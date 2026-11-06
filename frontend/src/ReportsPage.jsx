@@ -264,7 +264,7 @@ export default function ReportsPage({ session, sessionLoading }) {
     <header className="toolbar reports-toolbar">
       <div className="brand">OptiSuite Web</div>
       <span className="toolbar-divider" />
-      <a className="tool-button" href="#/">← Workspace</a>
+      <a className="tool-button" href="#/analysis">← Workspace</a>
       <strong className="reports-toolbar-title">My reports</strong>
       <div className="toolbar-spacer" />
       <AccountControls session={session} sessionLoading={sessionLoading} />
