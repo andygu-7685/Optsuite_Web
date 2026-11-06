@@ -28,7 +28,7 @@ function responsePath(elements, key, x, y) {
   }).filter(Boolean).join(' ')
 }
 
-export default function FftResponseChart({ elements, threshold, detectDb }) {
+export default function FftResponseChart({ elements, threshold }) {
   const ordered = [...elements]
     .filter((element) => Number.isFinite(element.lp_per_mm) && element.lp_per_mm > 0)
     .sort((a, b) => a.lp_per_mm - b.lp_per_mm)
@@ -87,7 +87,6 @@ export default function FftResponseChart({ elements, threshold, detectDb }) {
         ))}
         <text className="fft-chart-axis-label" x={PLOT.left + plotWidth / 2} y={HEIGHT - 7} textAnchor="middle">Spatial frequency · lp/mm (log₂)</text>
       </svg>
-      <figcaption className="muted fft-note">Target bar directions. Dashed line: {threshold} MTF cutoff. A resolved element also needs {detectDb} dB over noise. Unscored frequencies are omitted.</figcaption>
     </figure>
   )
 }

@@ -99,7 +99,7 @@ function ReportDetail({ userId, selectedId }) {
         {detail.result?.elements?.some((element) => element.fft_orientations?.horizontal_bars || element.fft_orientations?.vertical_bars) && (
           <>
             <h3>FFT frequency response</h3>
-            <FftResponseChart elements={detail.result.elements} threshold={detail.result.fft?.mtf_threshold} detectDb={detail.result.fft?.detect_db} />
+            <FftResponseChart elements={detail.result.elements} threshold={detail.result.fft?.mtf_threshold} />
           </>
         )}
         <h3>Measured elements</h3>
