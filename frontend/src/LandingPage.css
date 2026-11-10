@@ -1,0 +1,30 @@
+.landing-page { min-height: 100vh; min-height: 100dvh; display: flex; flex-direction: column; background: #fff; color: #1c1c21; font-size: 14px; }
+.landing-header { flex: none; display: flex; align-items: center; height: 52px; padding: 0 24px; border-bottom: 1px solid #e0e0db; }
+.landing-header a { color: inherit; font-size: 15px; font-weight: 600; text-decoration: none; }
+.landing-main { flex: 1; display: flex; flex-direction: column; gap: 48px; width: 100%; max-width: 1080px; margin: 0 auto; padding: 64px 24px 72px; }
+.landing-hero { display: flex; flex-direction: column; align-items: center; gap: 14px; text-align: center; animation: landing-rise .25s cubic-bezier(.2,.8,.2,1) both; }
+.landing-hero h1 { max-width: 720px; margin: 0; font-size: clamp(28px,4.4vw,42px); font-weight: 500; line-height: 1.15; letter-spacing: -.02em; text-wrap: balance; }
+.landing-hero p { max-width: 540px; margin: 0; color: #5d5d66; font-size: 16px; line-height: 1.55; text-wrap: pretty; }
+.landing-cta { display: inline-flex; align-items: center; justify-content: center; gap: 8px; min-height: 40px; margin-top: 8px; padding: 0 20px; border: 1px solid #5a2fd6; border-radius: 3px; background: #6d3ff0; color: #fff; font-size: 14px; font-weight: 500; text-decoration: none; transition: background .1s, transform .1s; }
+.landing-cta:hover { background: #5a2fd6; color: #fff; }
+.landing-cta:active { transform: translateY(1px); }
+.landing-play { width: 0; height: 0; border-top: 4.5px solid transparent; border-bottom: 4.5px solid transparent; border-left: 7px solid currentColor; }
+.landing-tools { display: grid; grid-template-columns: repeat(3,minmax(0,1fr)); gap: 16px; }
+.landing-card { display: flex; flex-direction: column; min-width: 0; overflow: hidden; border: 1px solid #d4d4cf; border-radius: 4px; background: #fff; color: inherit; text-decoration: none; animation: landing-rise .3s cubic-bezier(.2,.8,.2,1) both; transition: border-color .12s, box-shadow .12s, transform .12s; }
+.landing-card:hover { border-color: #6d3ff0; box-shadow: 0 4px 14px rgba(28,28,33,.08); transform: translateY(-2px); }
+.landing-card:focus-visible, .landing-cta:focus-visible, .landing-header a:focus-visible { outline: 2px solid #5a2fd6; outline-offset: 3px; }
+.landing-card-visual { display: grid; place-items: center; height: 168px; overflow: hidden; border-bottom: 1px solid #d4d4cf; background: #1e1e22; }
+.landing-card-visual img { display: block; width: 100%; height: 100%; object-fit: cover; }
+.landing-card-copy { display: flex; flex: 1; flex-direction: column; gap: 4px; padding: 14px 16px 16px; }
+.landing-card-copy h2 { margin: 0; font-size: 15px; font-weight: 500; }
+.landing-card-copy p { margin: 0; color: #5d5d66; font-size: 13px; line-height: 1.5; }
+.landing-steps { display: grid; grid-template-columns: repeat(3,minmax(0,1fr)); gap: 24px; padding-top: 32px; border-top: 1px solid #e0e0db; }
+.landing-step { display: flex; gap: 12px; }
+.landing-step-number { flex: none; display: grid; place-items: center; width: 24px; height: 24px; border: 1px solid #6d3ff0; border-radius: 2px; color: #5a2fd6; font-size: 12px; font-weight: 600; }
+.landing-step h2 { margin: 0 0 2px; font-size: 14px; font-weight: 500; }
+.landing-step p { margin: 0; color: #5d5d66; font-size: 13px; line-height: 1.5; }
+.landing-footer { flex: none; display: flex; align-items: center; min-height: 44px; padding: 0 24px; border-top: 1px solid #e0e0db; background: #f6f6f4; color: #5d5d66; font-size: 12px; }
+@keyframes landing-rise { from { opacity: 0; transform: translateY(6px); } to { opacity: 1; transform: none; } }
+@media (max-width: 760px) { .landing-main { padding-top: 48px; } .landing-tools { grid-template-columns: repeat(2,minmax(0,1fr)); } .landing-steps { grid-template-columns: repeat(2,minmax(0,1fr)); } }
+@media (max-width: 540px) { .landing-main { gap: 36px; padding: 42px 18px 56px; } .landing-header,.landing-footer { padding-right: 18px; padding-left: 18px; } .landing-tools,.landing-steps { grid-template-columns: 1fr; } .landing-card-visual { height: 180px; } }
+@media (prefers-reduced-motion: reduce) { .landing-hero,.landing-card { animation: none; } .landing-card,.landing-cta { transition: none; } }
