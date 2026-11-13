@@ -1,5 +1,6 @@
 import { useEffect, useRef, useState } from 'react'
 import { supabase } from './supabaseClient.js'
+import { customOverlayStyle, parseOverlayStyle } from './overlayStyle.js'
 
 const emptyProfile = {
   name: '', description: '', overlay_style: 'classic', flip_setting: 'auto',
@@ -10,9 +11,11 @@ export default function MicroscopeProfiles({ userId, selectedProfile, onSelect, 
   const [loading, setLoading] = useState(true)
   const [editing, setEditing] = useState(null)
   const [form, setForm] = useState(emptyProfile)
+  const [widthInput, setWidthInput] = useState(null)
   const [pending, setPending] = useState(false)
   const [error, setError] = useState('')
   const onSelectRef = useRef(onSelect)
+  const formOverlay = parseOverlayStyle(form.overlay_style)
 
   useEffect(() => { onSelectRef.current = onSelect }, [onSelect])
 
@@ -88,7 +91,8 @@ export default function MicroscopeProfiles({ userId, selectedProfile, onSelect, 
       {editing && <form className="microscope-form" onSubmit={save}>
         <label>Name<input value={form.name} maxLength={100} required onChange={(event) => setForm({ ...form, name: event.target.value })} /></label>
         <label>Description <span className="microscope-character-count">{form.description.length}/100</span><textarea rows="3" maxLength={100} value={form.description} onChange={(event) => setForm({ ...form, description: event.target.value })} /></label>
-        <label>Default overlay<select value={form.overlay_style} onChange={(event) => setForm({ ...form, overlay_style: event.target.value })}><option value="classic">Yellow</option><option value="cyan_white">Cyan + white</option><option value="magenta_yellow">Magenta + yellow</option><option value="green_white">Green + white</option></select></label>
+        <label>Default scanline color<input type="color" value={formOverlay.color} onChange={(event) => setForm({ ...form, overlay_style: customOverlayStyle(event.target.value, formOverlay.width) })} /></label>
+        <label>Default scanline width (px)<input type="number" min="1" max="20" step="1" value={widthInput?.style === form.overlay_style ? widthInput.value : String(formOverlay.width)} onChange={(event) => { const value = event.target.value; setWidthInput({ style: form.overlay_style, value }); const width = Number(value); if (value !== '' && Number.isInteger(width) && width >= 1 && width <= 20) setForm({ ...form, overlay_style: customOverlayStyle(formOverlay.color, width) }) }} onBlur={() => setWidthInput(null)} /></label>
         <label>Default flip setting<select value={form.flip_setting} onChange={(event) => setForm({ ...form, flip_setting: event.target.value })}><option value="auto">Auto</option><option value="yes">Yes</option><option value="no">No</option></select></label>
         <div className="microscope-actions"><button type="submit" disabled={pending}>{pending ? 'Saving…' : 'Save profile'}</button><button type="button" onClick={() => setEditing(null)} disabled={pending}>Cancel</button></div>
       </form>}

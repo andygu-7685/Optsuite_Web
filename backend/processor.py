@@ -6,31 +6,12 @@ from pathlib import Path
 os.environ.setdefault("MPLBACKEND", "Agg")
 
 import cv2
+from backend.overlay_style import resolve_overlay_style
 from backend.usaf_registration import UsafRegistration
 from backend.usaf_registration.yolo_model import (
     MODEL_PATH, NUM_MODEL_PATH, RES_MODEL_PATH, PT4_MODEL_PATH,
     SINGLE_SCANLINE_MODEL_PATH,
 )
-
-OVERLAY_STYLES = {
-    "classic": {
-        "line_color": (0, 230, 255), "line_width": 2,
-        "label_color": (0, 230, 255), "label_width": 2,
-    },
-    "cyan_white": {
-        "line_color": (255, 255, 0), "line_width": 3,
-        "label_color": (255, 255, 255), "label_width": 2,
-    },
-    "magenta_yellow": {
-        "line_color": (255, 0, 255), "line_width": 4,
-        "label_color": (0, 230, 255), "label_width": 3,
-    },
-    "green_white": {
-        "line_color": (80, 255, 80), "line_width": 2,
-        "label_color": (255, 255, 255), "label_width": 2,
-    },
-}
-
 
 def file_sha256(path: Path) -> str:
     with path.open("rb") as stream:
@@ -41,7 +22,7 @@ def file_sha256(path: Path) -> str:
 def analysis_provenance() -> dict:
     """Fingerprint the code, checkpoints and calibration images used by this deployment."""
     source_dir = Path(__file__).resolve().parent / "usaf_registration"
-    code_files = sorted(source_dir.glob("*.py")) + [Path(__file__).resolve()]
+    code_files = sorted(source_dir.glob("*.py")) + [Path(__file__).resolve(), Path(__file__).with_name("overlay_style.py")]
     code_hash = hashlib.sha256()
     for path in code_files:
         code_hash.update(path.name.encode())
@@ -72,7 +53,7 @@ def draw_overlay(image, elements: list[dict], best: dict, style: dict):
         g, e = int(item["group"]), int(item["element"])
         selected = (g, e) == (int(best["group"]), int(best["element"]))
         # OpenCV uses BGR. Dark outlines keep marks legible on bright bars.
-        line_width = style["line_width"] + int(selected)
+        line_width = style["line_width"]
         label_width = style["label_width"] + int(selected)
 
         for direction in ("vertical", "horizontal"):
@@ -99,7 +80,7 @@ def draw_overlay(image, elements: list[dict], best: dict, style: dict):
 def analyze(image_path: str, job_dir: str, overlay_style: str = "classic", flipped: bool | None = None) -> dict:
     provenance = analysis_provenance()
     work = Path(job_dir)
-    style = OVERLAY_STYLES[overlay_style]
+    style = resolve_overlay_style(overlay_style)
     scorer = UsafRegistration()
     scorer.C.FLIP_OVERRIDE = flipped
     if flipped is not None:

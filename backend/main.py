@@ -13,7 +13,8 @@ from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import FileResponse, Response
 from PIL import Image
 
-from backend.processor import OVERLAY_STYLES, analyze, draw_overlay
+from backend.overlay_style import resolve_overlay_style
+from backend.processor import analyze, draw_overlay
 
 DEFAULT_DATA_DIR = Path(__file__).resolve().parent / "runtime-data"
 DATA_DIR = Path(os.getenv("USAF_DATA_DIR", str(DEFAULT_DATA_DIR))).resolve()
@@ -68,8 +69,10 @@ def create_analysis(
     overlay_style: str = Form("classic"),
     flipped: bool | None = Form(None),
 ):
-    if overlay_style not in OVERLAY_STYLES:
-        raise HTTPException(422, "Unknown overlay style")
+    try:
+        resolve_overlay_style(overlay_style)
+    except ValueError as exc:
+        raise HTTPException(422, str(exc)) from exc
     pending = sum(not job["future"].done() for job in jobs.values())
     if pending >= MAX_PENDING:
         raise HTTPException(429, "Analysis queue is full")
@@ -159,9 +162,10 @@ def get_overlay(
 ):
     job = get_job(job_id, x_job_token)
     if overlay_style is not None:
-        if overlay_style not in OVERLAY_STYLES:
-            raise HTTPException(422, "Unknown overlay style")
-        style = OVERLAY_STYLES[overlay_style]
+        try:
+            style = resolve_overlay_style(overlay_style)
+        except ValueError as exc:
+            raise HTTPException(422, str(exc)) from exc
 
         if not job["future"].done():
             raise HTTPException(404, "Overlay not ready")

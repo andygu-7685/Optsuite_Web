@@ -4,18 +4,12 @@ import AccountControls from './AccountControls.jsx'
 import ContrastCharts from './ContrastCharts.jsx'
 import LandingPage from './LandingPage.jsx'
 import MicroscopeProfiles from './MicroscopeProfiles.jsx'
+import { customOverlayStyle, overlayStyleLabel, parseOverlayStyle } from './overlayStyle.js'
 import { snapshotProfile } from './profileSnapshot.js'
 import ReportsPage from './ReportsPage.jsx'
 import { saveCharacterizationReport } from './saveReport.js'
 import { supabase } from './supabaseClient.js'
 import './App.css'
-
-const overlayStyles = [
-  { id: 'classic', name: 'Yellow', detail: '2 px lines · 2 px labels', line: '#ffe600', label: '#ffe600' },
-  { id: 'cyan_white', name: 'Cyan + white', detail: '3 px lines · 2 px labels', line: '#2ee6ff', label: '#ffffff' },
-  { id: 'magenta_yellow', name: 'Magenta + yellow', detail: '4 px lines · 3 px labels', line: '#ff3fd2', label: '#ffe600' },
-  { id: 'green_white', name: 'Green + white', detail: '2 px lines · 2 px labels', line: '#4dff6a', label: '#ffffff' },
-]
 
 function pageFromHash() {
   if (window.location.hash === '#/reports') return 'reports'
@@ -46,6 +40,7 @@ export default function App() {
   const [imageDimensions, setImageDimensions] = useState('')
   const [overlayUrl, setOverlayUrl] = useState(null)
   const [overlayStyle, setOverlayStyle] = useState('classic')
+  const [widthInput, setWidthInput] = useState(null)
   const [flipSetting, setFlipSetting] = useState('auto')
   const [selectedProfile, setSelectedProfile] = useState(null)
   const [runProfile, setRunProfile] = useState(null)
@@ -68,8 +63,8 @@ export default function App() {
 
   const busy = ['uploading', 'queued', 'running'].includes(phase)
   const done = phase === 'done'
-  const currentReportKey = session?.user && analysisJob ? `${session.user.id}:${analysisJob.id}` : null
-  const selectedStyle = overlayStyles.find((style) => style.id === overlayStyle)
+  const currentReportKey = session?.user && analysisJob ? `${session.user.id}:${analysisJob.id}:${overlayStyle}` : null
+  const selectedStyle = parseOverlayStyle(overlayStyle)
   const statusText = errorMessage || {
     idle: 'Ready — open an image to begin',
     ready: 'Image loaded — press Analyze',
@@ -250,6 +245,15 @@ export default function App() {
     setRunProfile(null)
   }
 
+  function changeOverlayStyle(style) {
+    if (style === overlayStyle || savePending) return
+    setOverlayStyle(style)
+    if (analysisResult) {
+      replaceOverlayUrl(null)
+      setOverlayLoading(true)
+    }
+  }
+
   async function saveReport() {
     if (!supabase || !currentReportKey || !selectedFile || !overlayUrl || !analysisResult || savePending || savedReportKey === currentReportKey) return
     if (!runProfile) {
@@ -411,15 +415,10 @@ export default function App() {
             </div>
           </section>
           <section className="panel-section style-section">
-            <h2>Overlay style</h2>
-            <div className="style-options" role="radiogroup" aria-label="Overlay style">
-              {overlayStyles.map((style) => (
-                <button key={style.id} type="button" role="radio" aria-checked={style.id === overlayStyle} className={`style-option ${style.id === overlayStyle ? 'selected' : ''}`} onClick={() => { setOverlayStyle(style.id); if (analysisResult) { replaceOverlayUrl(null); setOverlayLoading(true) } }} disabled={savePending}>
-                  <span className="radio-ring"><span /></span>
-                  <span className="style-label"><span>{style.name}</span><small>{style.detail}</small></span>
-                  <span className="style-swatch"><span className="swatch-label" style={{ color: style.label }}>G3E6</span><span className="swatch-line" style={{ background: style.line }} /></span>
-                </button>
-              ))}
+            <h2>Overlay scanlines</h2>
+            <div className="overlay-controls">
+              <label>Color <input type="color" value={selectedStyle.color} onChange={(event) => changeOverlayStyle(customOverlayStyle(event.target.value, selectedStyle.width))} disabled={savePending} /></label>
+              <label>Width (px) <input type="number" min="1" max="20" step="1" value={widthInput?.style === overlayStyle ? widthInput.value : String(selectedStyle.width)} onChange={(event) => { const value = event.target.value; setWidthInput({ style: overlayStyle, value }); const width = Number(value); if (value !== '' && Number.isInteger(width) && width >= 1 && width <= 20) changeOverlayStyle(customOverlayStyle(selectedStyle.color, width)) }} onBlur={() => setWidthInput(null)} disabled={savePending} /></label>
             </div>
           </section>
         </aside>
@@ -452,7 +451,7 @@ export default function App() {
         </aside>
       </div>
 
-      <footer className="status-bar"><span className={`status-dot ${busy ? 'busy' : done ? 'done' : selectedFile ? 'ready' : ''}`} /><span className="status-message" title={statusText}>{statusText}</span><span className="status-spacer" />{runProfile && <span>Run: {runProfile.name}</span>}<span>Overlay: {selectedStyle.name}</span>{imageDimensions && <span>{imageDimensions} px</span>}</footer>
+      <footer className="status-bar"><span className={`status-dot ${busy ? 'busy' : done ? 'done' : selectedFile ? 'ready' : ''}`} /><span className="status-message" title={statusText}>{statusText}</span><span className="status-spacer" />{runProfile && <span>Run: {runProfile.name}</span>}<span>Overlay: {overlayStyleLabel(overlayStyle)}</span>{imageDimensions && <span>{imageDimensions} px</span>}</footer>
       {saveNotice && <div className={`save-notice ${saveNotice.type}`} role={saveNotice.type === 'error' ? 'alert' : 'status'}>{saveNotice.text}<button type="button" aria-label="Dismiss save message" onClick={() => setSaveNotice(null)}>×</button></div>}
     </main>
   )

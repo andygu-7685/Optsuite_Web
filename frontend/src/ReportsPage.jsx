@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState } from 'react'
 import AccountControls from './AccountControls.jsx'
 import ContrastCharts from './ContrastCharts.jsx'
+import { overlayStyleLabel } from './overlayStyle.js'
 import { supabase } from './supabaseClient.js'
 import './ReportsPage.css'
 
@@ -98,7 +99,7 @@ function ReportDetail({ userId, selectedId, onDelete, deleting }) {
           <div><dt>Best group / element</dt><dd>G{detail.best_group} E{detail.best_element}</dd></div>
           <div><dt>Resolving power</dt><dd>{formattedNumber(detail.lp_per_mm)} lp/mm</dd></div>
           <div><dt>Resolution</dt><dd>{formattedNumber(detail.resolution_mm, 4)} mm</dd></div>
-          <div><dt>Overlay style</dt><dd>{detail.overlay_style}</dd></div>
+          <div><dt>Scanline overlay</dt><dd>{overlayStyleLabel(detail.overlay_style)}</dd></div>
           <div><dt>Image flipped</dt><dd>{detail.flipped === null ? 'Auto' : detail.flipped ? 'Yes' : 'No'}</dd></div>
         </dl>
         {detail.profile_snapshot && <>
