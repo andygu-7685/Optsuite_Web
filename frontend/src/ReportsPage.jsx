@@ -1,5 +1,6 @@
 import { useEffect, useRef, useState } from 'react'
 import AccountControls from './AccountControls.jsx'
+import ContrastCharts from './ContrastCharts.jsx'
 import { supabase } from './supabaseClient.js'
 import './ReportsPage.css'
 
@@ -111,6 +112,7 @@ function ReportDetail({ userId, selectedId, onDelete, deleting }) {
           </dl>
         </>}
         {detail.provenance && <details className="reports-json"><summary>Code, model and calibration versions</summary><pre>{JSON.stringify(detail.provenance, null, 2)}</pre></details>}
+        <ContrastCharts elements={detail.result?.elements} />
         <h3>Measured elements</h3>
         {detail.result?.elements?.length ? <div className="reports-table-wrap"><table className="reports-elements"><thead><tr><th>Element</th><th>lp/mm</th><th>Score</th></tr></thead><tbody>
           {detail.result.elements.map((element, index) => <tr key={`${element.group}-${element.element}-${index}`} className={element.selected ? 'best' : ''}><td>G{element.group} E{element.element}</td><td>{formattedNumber(element.lp_per_mm)}</td><td>{formattedNumber(element.contrast_score, 2)}</td></tr>)}

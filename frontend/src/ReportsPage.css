@@ -31,6 +31,7 @@
 .reports-image-viewer p { max-width: 360px; padding: 20px; color: #a3a3ad; text-align: center; }
 .reports-data { min-width: 0; overflow: auto; padding: 16px; border-left: 1px solid #d4d4cf; background: #f6f6f4; }
 .reports-data h3 { margin: 0 0 8px; color: #5d5d66; font-size: 11px; font-weight: 600; letter-spacing: .06em; text-transform: uppercase; }
+.reports-data .contrast-charts { margin-bottom: 24px; }
 .reports-facts { margin: 0 0 24px; border: 1px solid #d4d4cf; border-radius: 3px; background: #fff; }
 .reports-facts div { display: flex; justify-content: space-between; gap: 12px; padding: 7px 8px; border-bottom: 1px solid #ecece8; }
 .reports-facts div:last-child { border-bottom: 0; }

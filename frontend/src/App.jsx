@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState } from 'react'
 import { getAnalysis, getOverlayObjectUrl, uploadAnalysis } from './api.js'
 import AccountControls from './AccountControls.jsx'
+import ContrastCharts from './ContrastCharts.jsx'
 import LandingPage from './LandingPage.jsx'
 import MicroscopeProfiles from './MicroscopeProfiles.jsx'
 import { snapshotProfile } from './profileSnapshot.js'
@@ -446,6 +447,7 @@ export default function App() {
               </div>
             )}
           </section>
+          {analysisResult?.elements?.length > 0 && <section className="panel-section"><ContrastCharts elements={analysisResult.elements} /></section>}
           {analysisResult && <section className="json-section"><div className="json-heading"><button type="button" onClick={() => setJsonOpen(!jsonOpen)} aria-expanded={jsonOpen}><span className={jsonOpen ? 'chevron open' : 'chevron'}>▸</span> Raw JSON</button><button type="button" className="copy-button" onClick={copyResults}>{copied ? 'Copied' : 'Copy'}</button></div>{jsonOpen && <pre>{JSON.stringify(analysisResult, null, 2)}</pre>}</section>}
         </aside>
       </div>

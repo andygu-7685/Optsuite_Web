@@ -1,0 +1,14 @@
+.contrast-charts { display: grid; gap: 10px; min-width: 0; }
+.contrast-charts h3 { margin: 0; color: #5d5d66; font-size: 11px; font-weight: 600; letter-spacing: .06em; text-transform: uppercase; }
+.contrast-chart { min-width: 0; margin: 0; padding: 8px 6px 7px; border: 1px solid #d4d4cf; border-radius: 3px; background: #fff; }
+.contrast-chart figcaption { margin: 0 4px 3px; color: #33333a; font-size: 12px; font-weight: 600; }
+.contrast-chart svg { display: block; width: 100%; height: auto; overflow: visible; }
+.contrast-grid { stroke: #e7e7e4; stroke-width: 1; }
+.contrast-selected { stroke: #63636c; stroke-width: 1; stroke-dasharray: 3 3; }
+.contrast-line { fill: none; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; }
+.contrast-tick, .contrast-axis-label { fill: #74747c; font-size: 10px; font-family: inherit; }
+.contrast-axis-label { font-size: 10.5px; }
+.contrast-legend { display: flex; flex-wrap: wrap; gap: 4px 10px; margin: 0 6px; color: #5d5d66; font-size: 10.5px; }
+.contrast-legend span { display: inline-flex; align-items: center; gap: 4px; }
+.contrast-legend i { display: inline-block; width: 9px; height: 9px; border-radius: 50%; }
+.contrast-legend .contrast-legend-selected { color: #74747c; }
